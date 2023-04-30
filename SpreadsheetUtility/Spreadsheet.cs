@@ -94,8 +94,8 @@ namespace SpreadsheetUtility
 
             var worksheets = m_Document.GetWorksheetNames();
 
-            if (worksheets.Count < 2)
-                m_Document.AddWorksheet(k_DefaultWorksheet);
+            if (worksheets.Count < 2 && !m_Document.AddWorksheet(k_DefaultWorksheet))
+                m_Document.SelectWorksheet(k_DefaultWorksheet);
 
             var wasDefaultWorksheet = m_Document.GetCurrentWorksheetName() == k_DefaultWorksheet;
 
