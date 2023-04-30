@@ -2,6 +2,7 @@
 Ultra lightweight spreadsheet utility to display processed collections of data and occasionally reading it
 
 ![license](https://img.shields.io/github/license/planktomas/spreadsheetutility.svg)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/planktomas/spreadsheetutility)
 
 #### Features
 + Uses XLSX file format
