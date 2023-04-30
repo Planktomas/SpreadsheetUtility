@@ -111,7 +111,7 @@ namespace SpreadsheetUtility
             WriteData(properties, source);
         }
 
-        string Cell(int x, int y)
+        internal static string Cell(int x, int y)
         {
             const int Range = 'Z' - 'A' + 1;
 

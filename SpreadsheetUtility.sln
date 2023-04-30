@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpreadsheetUtility", "Sprea
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playground", "Playground\Playground.csproj", "{096931C2-932B-4FCE-868A-054371595707}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{53961C8D-1AE9-4975-80C3-EF7774F58489}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{096931C2-932B-4FCE-868A-054371595707}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{096931C2-932B-4FCE-868A-054371595707}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{096931C2-932B-4FCE-868A-054371595707}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53961C8D-1AE9-4975-80C3-EF7774F58489}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53961C8D-1AE9-4975-80C3-EF7774F58489}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53961C8D-1AE9-4975-80C3-EF7774F58489}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53961C8D-1AE9-4975-80C3-EF7774F58489}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
