@@ -1,6 +1,14 @@
 # SpreadsheetUtility
-Ultra lightweight spreadsheet utility to display collections of data and occasionally reading it
+Ultra lightweight spreadsheet utility to display processed collections of data and occasionally reading it
 
+#### Features
++ Uses XLSX file format
++ Writes public properties of a collection into a dedicated worksheet
++ Reads worksheet data into tuple enumerator
++ Supports multiple worksheets
++ Auto fits columns for comfortable viewing
+
+#### Preview
 <img src="https://user-images.githubusercontent.com/94010480/235344261-6c207066-a73a-4abd-9ac4-7c0eec31ff17.png" width="500" height="300" />
 
 ```cs
