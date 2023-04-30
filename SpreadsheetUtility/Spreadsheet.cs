@@ -113,7 +113,7 @@ namespace SpreadsheetUtility
 
         string Cell(int x, int y)
         {
-            const int Range = 'Z' - 'A';
+            const int Range = 'Z' - 'A' + 1;
 
             var coord = string.Empty;
 
@@ -121,7 +121,8 @@ namespace SpreadsheetUtility
             {
                 coord = (char)('A' + (x % Range)) + coord;
                 x /= Range;
-            } while (x > 0);
+                x -= 1;
+            } while (x >= 0);
 
             return coord + (y + 1);
         }
