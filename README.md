@@ -8,52 +8,69 @@ Ultra lightweight spreadsheet utility to display processed collections of data a
 + Supports multiple worksheets
 + Auto fits columns for comfortable viewing
 
-#### Preview
-<img src="https://user-images.githubusercontent.com/94010480/235344261-6c207066-a73a-4abd-9ac4-7c0eec31ff17.png" width="500" height="300" />
+#### Tutorial
+
+Let's create an employee class to store in a spreadsheet.
 
 ```cs
-class TestObject
+class Employee
 {
     public string Name { get; set; }
-    public string Description { get; set; }
-    public decimal Price { get; set; }
+    public string Position { get; set; }
+    public decimal Salary { get; set; }
 
-    public static TestObject[] Make(int count)
+    public Employee(string name, string position, decimal salary)
     {
-        var result = new TestObject[count];
-
-        for (int i = 0; i < result.Length; i++)
-        {
-            result[i] = new TestObject()
-            {
-                Name = i.ToString(),
-                Description = Guid.NewGuid().ToString(),
-                Price = i * i * i,
-            };
-        }
-
-        return result;
+        Name = name;
+        Position = position;
+        Salary = salary;
     }
 }
+```
 
-static void Main(string[] args)
+Now we can make an array of company's employees.
+
+```cs
+var employees = new[]
 {
-    var spreadsheet = new Spreadsheet("test.xlsx");
-    spreadsheet.Write(TestObject.Make(10));
+    new Employee("John", "CEO", 10000),
+    new Employee("Kate", "Software Engineer", 2000),
+    new Employee("Paul", "Quality Assurance", 1000)
+};
+```
 
-    IEnumerable<(string Description, decimal Price)> info = spreadsheet.Read<string, decimal>(
-        typeof(TestObject), nameof(TestObject.Description), nameof(TestObject.Price));
+This array can now go into the spreadsheet.
 
-    foreach (var item in info)
-        Console.WriteLine($"Description: {item.Description} \t Price: {item.Price}");
-
-    Console.WriteLine();
-
-    // Alternative reading though this does not attach nice property names to results
-    var info2 = spreadsheet.Read<string, decimal>(
-        typeof(TestObject), nameof(TestObject.Description), nameof(TestObject.Price));
-
-    foreach (var item in info2)
-        Console.WriteLine($"Description: {item.Item1} \t Price: {item.Item2}");
+```cs
+using (var spreadsheet = new Spreadsheet("Company.xlsx"))
+{
+    spreadsheet.Write(employees);
 }
 ```
+
+Here is how this data looks in the spreadsheet.
+
+<img src="https://user-images.githubusercontent.com/94010480/235367459-c488f500-2f01-440e-9653-e3a8f895550d.png" width="350" height="220" />
+
+And if we need to read some of that data back, we can do it too.
+
+```cs
+using (var spreadsheet = new Spreadsheet("Company.xlsx"))
+{
+    IEnumerable<(decimal Salary, string Position)> salaries;
+
+    salaries = spreadsheet.Read<decimal, string>(typeof(Employee),
+        nameof(Employee.Salary), nameof(Employee.Position));
+}
+```
+
+We can verify the results just to be sure we got the right data.
+
+```cs
+foreach (var item in salaries)
+{
+    Console.WriteLine($"Salary: {item.Salary} \t Position: {item.Position}");
+}
+```
+
+<img src="https://user-images.githubusercontent.com/94010480/235367385-1bedc612-0d15-410e-b262-cb82b61601ae.png" width="400" height="90" />
