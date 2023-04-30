@@ -1,6 +1,8 @@
 # SpreadsheetUtility
 Ultra lightweight spreadsheet utility to display processed collections of data and occasionally reading it
 
+![license](https://img.shields.io/github/license/planktomas/spreadsheetutility.svg)
+
 #### Features
 + Uses XLSX file format
 + Writes public properties of a collection into a dedicated worksheet
