@@ -10,17 +10,19 @@ namespace SpreadsheetUtility
 {
     public class Spreadsheet : IDisposable
     {
-        const string k_DefaultWorksheet = "Sheet1";
-
         string m_Path;
-        SLDocument m_Document;
+        bool m_IsDirty;
+        internal SLDocument m_Document;
+
+        ObjectDisposedException disposedException =>
+            new ObjectDisposedException("This spreadsheet has been disposed");
 
         public Spreadsheet(string path)
         {
             m_Path = path;
 
-            if(File.Exists(path))
-                m_Document = new SLDocument(path);
+            if (File.Exists(m_Path))
+                m_Document = new SLDocument(m_Path);
             else
                 m_Document = new SLDocument();
         }
@@ -32,13 +34,28 @@ namespace SpreadsheetUtility
 
         public void Dispose()
         {
-            AutoFit();
-            
-            m_Document.SaveAs(m_Path);
+            if(m_Document == null)
+                return;
+
+            if(m_IsDirty)
+            {
+                AutoFit();
+
+                if (File.Exists(m_Path))
+                    m_Document.Save();
+                else
+                    m_Document.SaveAs(m_Path);
+            }
+
+            m_Document.Dispose();
+            m_Document = null;
         }
 
         public IEnumerable<T> Read<T>(Type worksheetType, string column)
         {
+            if (m_Document == null)
+                throw disposedException;
+
             var data = ReadData(worksheetType, column);
 
             return data[0].Select(d => 
@@ -47,6 +64,9 @@ namespace SpreadsheetUtility
 
         public IEnumerable<(T1, T2)> Read<T1, T2>(Type worksheetType, string column1, string column2)
         {
+            if (m_Document == null)
+                throw disposedException;
+
             var data = ReadData(worksheetType, column1, column2);
 
             return data[0].Zip(data[1], (x, y) => 
@@ -57,6 +77,9 @@ namespace SpreadsheetUtility
         public IEnumerable<(T1, T2, T3)> Read<T1, T2, T3>(Type worksheetType, string column1,
             string column2, string column3)
         {
+            if (m_Document == null)
+                throw disposedException;
+
             var data = ReadData(worksheetType, column1, column2, column3);
 
             var zip1 = data[0].Zip(data[1], (x, y) =>
@@ -71,6 +94,9 @@ namespace SpreadsheetUtility
         public IEnumerable<(T1, T2, T3, T4)> Read<T1, T2, T3, T4>(Type worksheetType, string column1,
             string column2, string column3, string column4)
         {
+            if (m_Document == null)
+                throw disposedException;
+
             var data = ReadData(worksheetType, column1, column2, column3, column4);
 
             var zip1 = data[0].Zip(data[1], (x, y) =>
@@ -87,6 +113,10 @@ namespace SpreadsheetUtility
 
         public void Write<TSource>(IEnumerable<TSource> source)
         {
+            if (m_Document == null)
+                throw disposedException;
+
+            m_IsDirty = true;
             var worksheet = typeof(TSource).Name;
             var properties = typeof(TSource)
                 .GetProperties(System.Reflection.BindingFlags.Instance
@@ -94,10 +124,10 @@ namespace SpreadsheetUtility
 
             var worksheets = m_Document.GetWorksheetNames();
 
-            if (worksheets.Count < 2 && !m_Document.AddWorksheet(k_DefaultWorksheet))
-                m_Document.SelectWorksheet(k_DefaultWorksheet);
+            if (worksheets.Count < 2 && !m_Document.AddWorksheet(SLDocument.DefaultFirstSheetName))
+                m_Document.SelectWorksheet(SLDocument.DefaultFirstSheetName);
 
-            var wasDefaultWorksheet = m_Document.GetCurrentWorksheetName() == k_DefaultWorksheet;
+            var wasDefaultWorksheet = m_Document.GetCurrentWorksheetName() == SLDocument.DefaultFirstSheetName;
 
             if (worksheets.Any(w => w == worksheet))
                 m_Document.DeleteWorksheet(worksheet);
@@ -105,7 +135,7 @@ namespace SpreadsheetUtility
             m_Document.AddWorksheet(worksheet);
 
             if(wasDefaultWorksheet)
-                m_Document.DeleteWorksheet(k_DefaultWorksheet);
+                m_Document.DeleteWorksheet(SLDocument.DefaultFirstSheetName);
 
             WriteHeaders(properties);
             WriteData(properties, source);
@@ -216,7 +246,7 @@ namespace SpreadsheetUtility
             return result;
         }
 
-        void AutoFit()
+        internal void AutoFit()
         {
             foreach (var worksheet in m_Document.GetWorksheetNames())
             {
