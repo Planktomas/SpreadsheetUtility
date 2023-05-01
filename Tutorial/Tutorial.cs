@@ -13,14 +13,9 @@ using (var spreadsheet = new Spreadsheet("Company.xlsx"))
 {
     spreadsheet.Write(employees);
 
-    IEnumerable<(decimal Salary, string Position)>? salaries;
-
-    salaries = spreadsheet.Read<decimal, string>(typeof(Employee),
-        nameof(Employee.Salary), nameof(Employee.Position));
-
-    foreach (var item in salaries)
+    foreach (var employee in spreadsheet.Read<Employee>())
     {
-        Console.WriteLine($"Salary: {item.Salary} \t Position: {item.Position}");
+        Console.WriteLine($"Salary: {employee.Salary} \t Position: {employee.Position}");
     }
 }
 
@@ -29,6 +24,8 @@ class Employee
     public string Name { get; set; }
     public string Position { get; set; }
     public decimal Salary { get; set; }
+
+    public Employee() { }
 
     public Employee(string name, string position, decimal salary)
     {

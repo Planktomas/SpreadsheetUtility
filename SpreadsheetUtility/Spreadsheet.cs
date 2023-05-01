@@ -48,6 +48,20 @@ namespace SpreadsheetUtility
             GC.SuppressFinalize(this);
         }
 
+        public IEnumerable<T>? Read<T>()
+        {
+            var worksheet = typeof(T).Name;
+            var properties = typeof(T)
+                .GetProperties(System.Reflection.BindingFlags.Instance
+                | System.Reflection.BindingFlags.Public).ToDictionary(p => p.Name);
+
+            if (!m_Document.SelectWorksheet(worksheet))
+                return null;
+
+            var sortedProperties = GetProperties(properties);
+            return GetData<T>(sortedProperties);
+        }
+
         public IEnumerable<T>? Read<T>(Type worksheetType, string column)
         {
             if (m_Document == null)
@@ -108,14 +122,14 @@ namespace SpreadsheetUtility
                 (x.Item1, x.Item2, y.Item1, y.Item2));
         }
 
-        public void Write<TSource>(IEnumerable<TSource> source)
+        public void Write<T>(IEnumerable<T> source)
         {
             if (m_Document == null)
                 throw DisposedException;
 
             m_IsDirty = true;
-            var worksheet = typeof(TSource).Name;
-            var properties = typeof(TSource)
+            var worksheet = typeof(T).Name;
+            var properties = typeof(T)
                 .GetProperties(System.Reflection.BindingFlags.Instance
                 | System.Reflection.BindingFlags.Public);
 
@@ -160,7 +174,7 @@ namespace SpreadsheetUtility
                 m_Document?.SetCellValue(Cell(i, 0), properties[i].Name);
         }
 
-        void WriteData<TSource>(PropertyInfo[] properties, IEnumerable<TSource> source)
+        void WriteData<T>(PropertyInfo[] properties, IEnumerable<T> source)
         {
             for (int y = 0; y < source.Count(); y++)
             {
@@ -169,7 +183,7 @@ namespace SpreadsheetUtility
             }
         }
 
-        void WriteEntry<TSource>(int row, PropertyInfo[] properties, TSource source)
+        void WriteEntry<T>(int row, PropertyInfo[] properties, T source)
         {
             for (int x = 0; x < properties.Length; x++)
             {
@@ -217,6 +231,24 @@ namespace SpreadsheetUtility
             return result;
         }
 
+        List<PropertyInfo?> GetProperties(Dictionary<string, PropertyInfo> properties)
+        {
+            var sortedProperties = new List<PropertyInfo?>();
+
+            for (var i = 0; true; i++)
+            {
+                var value = m_Document.GetCellValueAsString(Cell(i, 0));
+
+                if (string.IsNullOrEmpty(value))
+                    break;
+
+                properties.TryGetValue(value, out var property);
+                sortedProperties.Add(property);
+            }
+
+            return sortedProperties;
+        }
+
         List<string>[] GetData(string[] columns, int[] columnIndices)
         {
             var result = new List<string>[columns.Length];
@@ -241,6 +273,37 @@ namespace SpreadsheetUtility
             }
 
             return result;
+        }
+
+        List<T> GetData<T>(List<PropertyInfo?> properties)
+        {
+            var data = new List<T>();
+
+            for (int y = 1; true; y++)
+            {
+                var wasEmpty = true;
+                T entry = Activator.CreateInstance<T>();
+
+                for (int x = 0; x < properties.Count; x++)
+                {
+                    var value = m_Document.GetCellValueAsString(Cell(x, y));
+
+                    if (string.IsNullOrEmpty(value))
+                        break;
+
+                    properties[x]?.SetValue(entry, Convert.ChangeType(value,
+                        properties[x].PropertyType, CultureInfo.InvariantCulture));
+
+                    wasEmpty = false;
+                }
+
+                if (wasEmpty)
+                    break;
+
+                data.Add(entry);
+            }
+
+            return data;
         }
 
         internal void AutoFit()
