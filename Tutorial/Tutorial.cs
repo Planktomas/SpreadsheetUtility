@@ -13,7 +13,7 @@ using (var spreadsheet = new Spreadsheet("Company.xlsx"))
 {
     spreadsheet.Write(employees);
 
-    IEnumerable<(decimal Salary, string Position)> salaries;
+    IEnumerable<(decimal Salary, string Position)>? salaries;
 
     salaries = spreadsheet.Read<decimal, string>(typeof(Employee),
         nameof(Employee.Salary), nameof(Employee.Position));

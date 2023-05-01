@@ -6,12 +6,11 @@ namespace SpreadsheetUtility
 {
     public class Spreadsheet : IDisposable
     {
-        string m_Path;
+        internal SLDocument? m_Document;
+        readonly string m_Path;
         bool m_IsDirty;
-        internal SLDocument m_Document;
 
-        ObjectDisposedException disposedException =>
-            new ObjectDisposedException("This spreadsheet has been disposed");
+        static ObjectDisposedException DisposedException => new("This spreadsheet has been disposed");
 
         public Spreadsheet(string path)
         {
@@ -45,72 +44,74 @@ namespace SpreadsheetUtility
 
             m_Document.Dispose();
             m_Document = null;
+
+            GC.SuppressFinalize(this);
         }
 
-        public IEnumerable<T> Read<T>(Type worksheetType, string column)
+        public IEnumerable<T>? Read<T>(Type worksheetType, string column)
         {
             if (m_Document == null)
-                throw disposedException;
+                throw DisposedException;
 
             var data = ReadData(worksheetType, column);
 
-            return data[0].Select(d => 
-                ((T)Convert.ChangeType(d, typeof(T), CultureInfo.InvariantCulture)));
+            return data?[0].Select(d => 
+                (T)Convert.ChangeType(d, typeof(T), CultureInfo.InvariantCulture));
         }
 
-        public IEnumerable<(T1, T2)> Read<T1, T2>(Type worksheetType, string column1, string column2)
+        public IEnumerable<(T1, T2)>? Read<T1, T2>(Type worksheetType, string column1, string column2)
         {
             if (m_Document == null)
-                throw disposedException;
+                throw DisposedException;
 
             var data = ReadData(worksheetType, column1, column2);
 
-            return data[0].Zip(data[1], (x, y) => 
+            return data?[0].Zip(data[1], (x, y) => 
                 (((T1)Convert.ChangeType(x, typeof(T1), CultureInfo.InvariantCulture)),
                 ((T2)Convert.ChangeType(y, typeof(T2), CultureInfo.InvariantCulture))));
         }
 
-        public IEnumerable<(T1, T2, T3)> Read<T1, T2, T3>(Type worksheetType, string column1,
+        public IEnumerable<(T1, T2, T3)>? Read<T1, T2, T3>(Type worksheetType, string column1,
             string column2, string column3)
         {
             if (m_Document == null)
-                throw disposedException;
+                throw DisposedException;
 
             var data = ReadData(worksheetType, column1, column2, column3);
 
-            var zip1 = data[0].Zip(data[1], (x, y) =>
+            var zip1 = data?[0].Zip(data[1], (x, y) =>
                 (((T1)Convert.ChangeType(x, typeof(T1), CultureInfo.InvariantCulture)),
                 ((T2)Convert.ChangeType(y, typeof(T2), CultureInfo.InvariantCulture))));
 
-            return zip1.Zip(data[2], (x, y) =>
+            return zip1?.Zip(data[2], (x, y) =>
                 (x.Item1, x.Item2,
                 ((T3)Convert.ChangeType(y, typeof(T3), CultureInfo.InvariantCulture))));
         }
 
-        public IEnumerable<(T1, T2, T3, T4)> Read<T1, T2, T3, T4>(Type worksheetType, string column1,
+        public IEnumerable<(T1, T2, T3, T4)>? Read<T1, T2, T3, T4>(Type worksheetType, string column1,
             string column2, string column3, string column4)
         {
             if (m_Document == null)
-                throw disposedException;
+                throw DisposedException;
 
             var data = ReadData(worksheetType, column1, column2, column3, column4);
 
-            var zip1 = data[0].Zip(data[1], (x, y) =>
+            var zip1 = data?[0].Zip(data[1], (x, y) =>
                 (((T1)Convert.ChangeType(x, typeof(T1), CultureInfo.InvariantCulture)),
                 ((T2)Convert.ChangeType(y, typeof(T2), CultureInfo.InvariantCulture))));
 
-            var zip2 = data[2].Zip(data[3], (x, y) =>
+            var zip2 = data?[2].Zip(data[3], (x, y) =>
                 (((T3)Convert.ChangeType(x, typeof(T3), CultureInfo.InvariantCulture)),
                 ((T4)Convert.ChangeType(y, typeof(T4), CultureInfo.InvariantCulture))));
 
-            return zip1.Zip(zip2, (x, y) =>
+            return zip1?.Zip(zip2, (x, y) =>
                 (x.Item1, x.Item2, y.Item1, y.Item2));
         }
 
         public void Write<TSource>(IEnumerable<TSource> source)
         {
             if (m_Document == null)
-                throw disposedException;
+                throw DisposedException;
 
             m_IsDirty = true;
             var worksheet = typeof(TSource).Name;
@@ -156,7 +157,7 @@ namespace SpreadsheetUtility
         void WriteHeaders(PropertyInfo[] properties)
         {
             for (int i = 0; i < properties.Length; i++)
-                m_Document.SetCellValue(Cell(i, 0), properties[i].Name);
+                m_Document?.SetCellValue(Cell(i, 0), properties[i].Name);
         }
 
         void WriteData<TSource>(PropertyInfo[] properties, IEnumerable<TSource> source)
@@ -172,17 +173,17 @@ namespace SpreadsheetUtility
         {
             for (int x = 0; x < properties.Length; x++)
             {
-                var value = (string)Convert.ChangeType(properties[x].GetValue(source),
+                var value = (string?)Convert.ChangeType(properties[x].GetValue(source),
                     typeof(string), CultureInfo.InvariantCulture);
 
                 if (properties[x].PropertyType == typeof(string))
-                    m_Document.SetCellValue(Cell(x, row), value);
+                    m_Document?.SetCellValue(Cell(x, row), value);
                 else
-                    m_Document.SetCellValueNumeric(Cell(x, row), value);
+                    m_Document?.SetCellValueNumeric(Cell(x, row), value);
             }
         }
 
-        List<string>[] ReadData(Type worksheetType, params string[] columns)
+        List<string>[]? ReadData(Type worksheetType, params string[] columns)
         {
             var worksheetName = worksheetType.Name;
 
@@ -201,7 +202,7 @@ namespace SpreadsheetUtility
 
             for (int i = 0; true; i++)
             {
-                var value = m_Document.GetCellValueAsString(Cell(i, 0));
+                var value = m_Document?.GetCellValueAsString(Cell(i, 0));
 
                 if (string.IsNullOrEmpty(value))
                     break;
