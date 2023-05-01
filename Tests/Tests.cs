@@ -162,7 +162,7 @@ namespace Tests
         [Test]
         public void Headers_InfluencesColumnWidth()
         {
-            using(var spreadsheet = new Spreadsheet(k_SpreadsheetFilename))
+            using (var spreadsheet = new Spreadsheet(k_SpreadsheetFilename))
             {
                 spreadsheet.Write(AutoFit.Headers);
                 var shortColumnPrevWidth = spreadsheet.m_Document.GetColumnWidth("A1");
@@ -212,7 +212,7 @@ namespace Tests
         [Test]
         public void Write_WithOneSimpleObject_Works()
         {
-            using(var spreadsheet = new Spreadsheet(k_SpreadsheetFilename))
+            using (var spreadsheet = new Spreadsheet(k_SpreadsheetFilename))
             {
                 spreadsheet.Write(Simple.Three);
 
