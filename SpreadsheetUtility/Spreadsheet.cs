@@ -12,6 +12,10 @@ namespace SpreadsheetUtility
 
         static ObjectDisposedException DisposedException => new("This spreadsheet has been disposed");
 
+        /// <summary>
+        /// Creates or opens an XLSX format spreadsheet.
+        /// </summary>
+        /// <param name="path">Path to file.</param>
         public Spreadsheet(string path)
         {
             m_Path = path;
@@ -48,6 +52,11 @@ namespace SpreadsheetUtility
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// Reads the worksheet of the type provided.
+        /// </summary>
+        /// <typeparam name="T">Type identifying a worksheet</typeparam>
+        /// <returns>A collection of provided type instances with public instance properties having assigned read values.</returns>
         public IEnumerable<T>? Read<T>()
         {
             var worksheet = typeof(T).Name;
@@ -62,6 +71,14 @@ namespace SpreadsheetUtility
             return GetData<T>(sortedProperties);
         }
 
+        /// <summary>
+        /// Reads specified column of the worksheet of the type provided.
+        /// </summary>
+        /// <typeparam name="T">Column type.</typeparam>
+        /// <param name="worksheetType">Type identifying the worksheet.</param>
+        /// <param name="column">Name of the column.</param>
+        /// <returns>A collection of the specified column from specified worksheet.
+        /// Returned as a collection of specified column type instances.</returns>
         public IEnumerable<T>? Read<T>(Type worksheetType, string column)
         {
             if (m_Document == null)
@@ -73,6 +90,16 @@ namespace SpreadsheetUtility
                 (T)Convert.ChangeType(d, typeof(T), CultureInfo.InvariantCulture));
         }
 
+        /// <summary>
+        /// Reads specified columns of the worksheet of the type provided.
+        /// </summary>
+        /// <typeparam name="T1">1st column type.</typeparam>
+        /// <typeparam name="T2">2nd column type.</typeparam>
+        /// <param name="worksheetType">Type identifying the worksheet.</param>
+        /// <param name="column1">Name of the 1st column.</param>
+        /// <param name="column2">Name of the 2nd column.</param>
+        /// <returns>A collection of specified columns from specified worksheet.
+        /// Returned as a collection of tuples containing specified type column instances.</returns>
         public IEnumerable<(T1, T2)>? Read<T1, T2>(Type worksheetType, string column1, string column2)
         {
             if (m_Document == null)
@@ -85,6 +112,18 @@ namespace SpreadsheetUtility
                 ((T2)Convert.ChangeType(y, typeof(T2), CultureInfo.InvariantCulture))));
         }
 
+        /// <summary>
+        /// Reads specified columns of the worksheet of the type provided.
+        /// </summary>
+        /// <typeparam name="T1">1st column type.</typeparam>
+        /// <typeparam name="T2">2nd column type.</typeparam>
+        /// <typeparam name="T3">3rd column type.</typeparam>
+        /// <param name="worksheetType">Type identifying the worksheet.</param>
+        /// <param name="column1">Name of the 1st column.</param>
+        /// <param name="column2">Name of the 2nd column.</param>
+        /// <param name="column3">Name of the 3rd column.</param>
+        /// <returns>A collection of specified columns from specified worksheet.
+        /// Returned as a collection of tuples containing specified type column instances.</returns>
         public IEnumerable<(T1, T2, T3)>? Read<T1, T2, T3>(Type worksheetType, string column1,
             string column2, string column3)
         {
@@ -102,6 +141,20 @@ namespace SpreadsheetUtility
                 ((T3)Convert.ChangeType(y, typeof(T3), CultureInfo.InvariantCulture))));
         }
 
+        /// <summary>
+        /// Reads specified columns of the worksheet of the type provided.
+        /// </summary>
+        /// <typeparam name="T1">1st column type.</typeparam>
+        /// <typeparam name="T2">2nd column type.</typeparam>
+        /// <typeparam name="T3">3rd column type.</typeparam>
+        /// <typeparam name="T4">4th column type.</typeparam>
+        /// <param name="worksheetType">Type identifying the worksheet.</param>
+        /// <param name="column1">Name of the 1st column.</param>
+        /// <param name="column2">Name of the 2nd column.</param>
+        /// <param name="column3">Name of the 3rd column.</param>
+        /// <param name="column4">Name of the 4th column.</param>
+        /// <returns>A collection of specified columns from specified worksheet.
+        /// Returned as a collection of tuples containing specified type column instances.</returns>
         public IEnumerable<(T1, T2, T3, T4)>? Read<T1, T2, T3, T4>(Type worksheetType, string column1,
             string column2, string column3, string column4)
         {
@@ -122,6 +175,11 @@ namespace SpreadsheetUtility
                 (x.Item1, x.Item2, y.Item1, y.Item2));
         }
 
+        /// <summary>
+        /// Creates or updates worksheet with data from the collection provided.
+        /// </summary>
+        /// <typeparam name="T">Type identifying worksheet.</typeparam>
+        /// <param name="source">Collection to be used as data source.</param>
         public void Write<T>(IEnumerable<T> source)
         {
             if (m_Document == null)
