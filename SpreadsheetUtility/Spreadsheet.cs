@@ -6,11 +6,22 @@ namespace SpreadsheetUtility
 {
     public class Spreadsheet : IDisposable
     {
-        internal SLDocument? m_Document;
-        readonly string m_Path;
-        bool m_IsDirty;
+        static ObjectDisposedException m_DisposedException = new($"Spreadsheet has been disposed");
 
-        static ObjectDisposedException DisposedException => new("This spreadsheet has been disposed");
+        readonly string m_Path;
+
+        SLDocument? m_Document;
+
+        internal SLDocument document
+        {
+            get
+            {
+                if (m_Document == null)
+                    throw m_DisposedException;
+
+                return m_Document;
+            }
+        }
 
         /// <summary>
         /// Creates or opens an XLSX format spreadsheet.
@@ -26,188 +37,14 @@ namespace SpreadsheetUtility
                 m_Document = new SLDocument();
         }
 
-        ~Spreadsheet()
-        {
-            Dispose();
-        }
-
         public void Dispose()
         {
-            if(m_Document == null)
-                return;
-
-            if(m_IsDirty)
-            {
-                AutoFit();
-
-                if (File.Exists(m_Path))
-                    m_Document.Save();
-                else
-                    m_Document.SaveAs(m_Path);
-            }
-
-            m_Document.Dispose();
+            this.AutoFit();
+            document.SaveAs(m_Path);
+            document.Dispose();
             m_Document = null;
 
             GC.SuppressFinalize(this);
-        }
-
-        /// <summary>
-        /// Reads the worksheet of the type provided.
-        /// </summary>
-        /// <typeparam name="T">Type identifying a worksheet</typeparam>
-        /// <returns>A collection of provided type instances with public instance properties having assigned read values.</returns>
-        public IEnumerable<T>? Read<T>()
-        {
-            var worksheet = typeof(T).Name;
-            var properties = typeof(T)
-                .GetProperties(System.Reflection.BindingFlags.Instance
-                | System.Reflection.BindingFlags.Public).ToDictionary(p => p.Name);
-
-            if (!m_Document.SelectWorksheet(worksheet))
-                return null;
-
-            var sortedProperties = GetProperties(properties);
-            return GetData<T>(sortedProperties);
-        }
-
-        /// <summary>
-        /// Reads specified column of the worksheet of the type provided.
-        /// </summary>
-        /// <typeparam name="T">Column type.</typeparam>
-        /// <param name="worksheetType">Type identifying the worksheet.</param>
-        /// <param name="column">Name of the column.</param>
-        /// <returns>A collection of the specified column from specified worksheet.
-        /// Returned as a collection of specified column type instances.</returns>
-        public IEnumerable<T>? Read<T>(Type worksheetType, string column)
-        {
-            if (m_Document == null)
-                throw DisposedException;
-
-            var data = ReadData(worksheetType, column);
-
-            return data?[0].Select(d => 
-                (T)Convert.ChangeType(d, typeof(T), CultureInfo.InvariantCulture));
-        }
-
-        /// <summary>
-        /// Reads specified columns of the worksheet of the type provided.
-        /// </summary>
-        /// <typeparam name="T1">1st column type.</typeparam>
-        /// <typeparam name="T2">2nd column type.</typeparam>
-        /// <param name="worksheetType">Type identifying the worksheet.</param>
-        /// <param name="column1">Name of the 1st column.</param>
-        /// <param name="column2">Name of the 2nd column.</param>
-        /// <returns>A collection of specified columns from specified worksheet.
-        /// Returned as a collection of tuples containing specified type column instances.</returns>
-        public IEnumerable<(T1, T2)>? Read<T1, T2>(Type worksheetType, string column1, string column2)
-        {
-            if (m_Document == null)
-                throw DisposedException;
-
-            var data = ReadData(worksheetType, column1, column2);
-
-            return data?[0].Zip(data[1], (x, y) => 
-                (((T1)Convert.ChangeType(x, typeof(T1), CultureInfo.InvariantCulture)),
-                ((T2)Convert.ChangeType(y, typeof(T2), CultureInfo.InvariantCulture))));
-        }
-
-        /// <summary>
-        /// Reads specified columns of the worksheet of the type provided.
-        /// </summary>
-        /// <typeparam name="T1">1st column type.</typeparam>
-        /// <typeparam name="T2">2nd column type.</typeparam>
-        /// <typeparam name="T3">3rd column type.</typeparam>
-        /// <param name="worksheetType">Type identifying the worksheet.</param>
-        /// <param name="column1">Name of the 1st column.</param>
-        /// <param name="column2">Name of the 2nd column.</param>
-        /// <param name="column3">Name of the 3rd column.</param>
-        /// <returns>A collection of specified columns from specified worksheet.
-        /// Returned as a collection of tuples containing specified type column instances.</returns>
-        public IEnumerable<(T1, T2, T3)>? Read<T1, T2, T3>(Type worksheetType, string column1,
-            string column2, string column3)
-        {
-            if (m_Document == null)
-                throw DisposedException;
-
-            var data = ReadData(worksheetType, column1, column2, column3);
-
-            var zip1 = data?[0].Zip(data[1], (x, y) =>
-                (((T1)Convert.ChangeType(x, typeof(T1), CultureInfo.InvariantCulture)),
-                ((T2)Convert.ChangeType(y, typeof(T2), CultureInfo.InvariantCulture))));
-
-            return zip1?.Zip(data[2], (x, y) =>
-                (x.Item1, x.Item2,
-                ((T3)Convert.ChangeType(y, typeof(T3), CultureInfo.InvariantCulture))));
-        }
-
-        /// <summary>
-        /// Reads specified columns of the worksheet of the type provided.
-        /// </summary>
-        /// <typeparam name="T1">1st column type.</typeparam>
-        /// <typeparam name="T2">2nd column type.</typeparam>
-        /// <typeparam name="T3">3rd column type.</typeparam>
-        /// <typeparam name="T4">4th column type.</typeparam>
-        /// <param name="worksheetType">Type identifying the worksheet.</param>
-        /// <param name="column1">Name of the 1st column.</param>
-        /// <param name="column2">Name of the 2nd column.</param>
-        /// <param name="column3">Name of the 3rd column.</param>
-        /// <param name="column4">Name of the 4th column.</param>
-        /// <returns>A collection of specified columns from specified worksheet.
-        /// Returned as a collection of tuples containing specified type column instances.</returns>
-        public IEnumerable<(T1, T2, T3, T4)>? Read<T1, T2, T3, T4>(Type worksheetType, string column1,
-            string column2, string column3, string column4)
-        {
-            if (m_Document == null)
-                throw DisposedException;
-
-            var data = ReadData(worksheetType, column1, column2, column3, column4);
-
-            var zip1 = data?[0].Zip(data[1], (x, y) =>
-                (((T1)Convert.ChangeType(x, typeof(T1), CultureInfo.InvariantCulture)),
-                ((T2)Convert.ChangeType(y, typeof(T2), CultureInfo.InvariantCulture))));
-
-            var zip2 = data?[2].Zip(data[3], (x, y) =>
-                (((T3)Convert.ChangeType(x, typeof(T3), CultureInfo.InvariantCulture)),
-                ((T4)Convert.ChangeType(y, typeof(T4), CultureInfo.InvariantCulture))));
-
-            return zip1?.Zip(zip2, (x, y) =>
-                (x.Item1, x.Item2, y.Item1, y.Item2));
-        }
-
-        /// <summary>
-        /// Creates or updates worksheet with data from the collection provided.
-        /// </summary>
-        /// <typeparam name="T">Type identifying worksheet.</typeparam>
-        /// <param name="source">Collection to be used as data source.</param>
-        public void Write<T>(IEnumerable<T> source)
-        {
-            if (m_Document == null)
-                throw DisposedException;
-
-            m_IsDirty = true;
-            var worksheet = typeof(T).Name;
-            var properties = typeof(T)
-                .GetProperties(System.Reflection.BindingFlags.Instance
-                | System.Reflection.BindingFlags.Public);
-
-            var worksheets = m_Document.GetWorksheetNames();
-
-            if (worksheets.Count < 2 && !m_Document.AddWorksheet(SLDocument.DefaultFirstSheetName))
-                m_Document.SelectWorksheet(SLDocument.DefaultFirstSheetName);
-
-            var wasDefaultWorksheet = m_Document.GetCurrentWorksheetName() == SLDocument.DefaultFirstSheetName;
-
-            if (worksheets.Any(w => w == worksheet))
-                m_Document.DeleteWorksheet(worksheet);
-
-            m_Document.AddWorksheet(worksheet);
-
-            if(wasDefaultWorksheet)
-                m_Document.DeleteWorksheet(SLDocument.DefaultFirstSheetName);
-
-            WriteHeaders(properties);
-            WriteData(properties, source);
         }
 
         internal static string Cell(int x, int y)
@@ -226,19 +63,69 @@ namespace SpreadsheetUtility
             return coord + (y + 1);
         }
 
+        /// <summary>
+        /// Reads the worksheet of the type provided.
+        /// </summary>
+        /// <typeparam name="T">Type identifying a worksheet</typeparam>
+        /// <returns>A collection of provided type instances with public instance properties having assigned read values.</returns>
+        public IEnumerable<T>? Read<T>()
+        {
+            var worksheet = typeof(T).Name;
+            var properties = typeof(T).GetProperties().ToDictionary(p => p.Name);
+
+            if (!SelectWorksheet(worksheet, false))
+                return null;
+
+            var worksheetProperties = GetWorksheetProperties<T>();
+            return ReadData<T>(worksheetProperties);
+        }
+
+        /// <summary>
+        /// Creates or updates worksheet with data from the collection provided.
+        /// </summary>
+        /// <typeparam name="T">Type identifying worksheet.</typeparam>
+        /// <param name="source">Collection to be used as data source.</param>
+        public void Write<T>(IEnumerable<T> source)
+        {
+            var worksheet = typeof(T).Name;
+            var properties = typeof(T).GetProperties();
+
+            SelectAndClearWorksheet(worksheet);
+            WriteHeaders(properties);
+            WriteData(properties, source);
+            this.ApplyWorksheetAttributes<T>(properties);
+        }
+
+        bool SelectWorksheet(string name, bool canCreate = true)
+        {
+            var selectResult = document.SelectWorksheet(name);
+
+            if (!canCreate || selectResult)
+                return selectResult;
+
+            return document.AddWorksheet(name);
+        }
+
+        void SelectAndClearWorksheet(string name)
+        {
+            document.AddWorksheet(SLDocument.DefaultFirstSheetName);
+
+            document.DeleteWorksheet(name);
+            SelectWorksheet(name);
+
+            document.DeleteWorksheet(SLDocument.DefaultFirstSheetName);
+        }
+
         void WriteHeaders(PropertyInfo[] properties)
         {
             for (int i = 0; i < properties.Length; i++)
-                m_Document?.SetCellValue(Cell(i, 0), properties[i].Name);
+                document.SetCellValue(Cell(i, 0), properties[i].Name);
         }
 
         void WriteData<T>(PropertyInfo[] properties, IEnumerable<T> source)
         {
             for (int y = 0; y < source.Count(); y++)
-            {
-                var entry = source.ElementAt(y);
-                WriteEntry(y + 1, properties, entry);
-            }
+                WriteEntry(y + 1, properties, source.ElementAt(y));
         }
 
         void WriteEntry<T>(int row, PropertyInfo[] properties, T source)
@@ -249,135 +136,55 @@ namespace SpreadsheetUtility
                     typeof(string), CultureInfo.InvariantCulture);
 
                 if (properties[x].PropertyType == typeof(string))
-                    m_Document?.SetCellValue(Cell(x, row), value);
+                    document.SetCellValue(Cell(x, row), value);
                 else
-                    m_Document?.SetCellValueNumeric(Cell(x, row), value);
+                    document.SetCellValueNumeric(Cell(x, row), value);
             }
         }
 
-        List<string>[]? ReadData(Type worksheetType, params string[] columns)
+        Dictionary<PropertyInfo, int> GetWorksheetProperties<T>()
         {
-            var worksheetName = worksheetType.Name;
-
-            if (!m_Document.GetWorksheetNames().Contains(worksheetName))
-                return null;
-
-            m_Document.SelectWorksheet(worksheetName);
-
-            var columnIndices = GetColumnIndices(columns);
-            return GetData(columns, columnIndices);
-        }
-
-        int[] GetColumnIndices(string[] columns)
-        {
-            var result = new int[columns.Length];
-
-            for (int i = 0; true; i++)
-            {
-                var value = m_Document?.GetCellValueAsString(Cell(i, 0));
-
-                if (string.IsNullOrEmpty(value))
-                    break;
-
-                for (int j = 0; j < columns.Length; j++)
-                {
-                    if (value == columns[j])
-                        result[j] = i;
-                }
-            }
-
-            return result;
-        }
-
-        List<PropertyInfo?> GetProperties(Dictionary<string, PropertyInfo> properties)
-        {
-            var sortedProperties = new List<PropertyInfo?>();
+            var typeProperties = typeof(T).GetProperties();
+            var worksheetProperties = new Dictionary<PropertyInfo, int>();
 
             for (var i = 0; true; i++)
             {
-                var value = m_Document.GetCellValueAsString(Cell(i, 0));
+                var label = document.GetCellValueAsString(Cell(i, 0));
 
-                if (string.IsNullOrEmpty(value))
+                if (string.IsNullOrEmpty(label))
                     break;
 
-                properties.TryGetValue(value, out var property);
-                sortedProperties.Add(property);
+                var labelProperty = typeProperties.FirstOrDefault(p => p.Name == label);
+
+                if (labelProperty == null)
+                    continue;
+
+                worksheetProperties[labelProperty] = i;
             }
 
-            return sortedProperties;
+            return worksheetProperties;
         }
 
-        List<string>[] GetData(string[] columns, int[] columnIndices)
+        IEnumerable<T> ReadData<T>(Dictionary<PropertyInfo, int> properties)
         {
-            var result = new List<string>[columns.Length];
+            var data = new List<T>(document.GetWorksheetStatistics().EndRowIndex + 1);
 
-            for (int y = 1; true; y++)
+            for (int y = 1; y < document.GetWorksheetStatistics().EndRowIndex; y++)
             {
-                var rowValues = new string[columnIndices.Length];
-
-                for (int i = 0; i < columnIndices.Length; i++)
-                    rowValues[i] = m_Document.GetCellValueAsString(Cell(columnIndices[i], y));
-
-                if (rowValues.All(v => string.IsNullOrEmpty(v)))
-                    break;
-
-                for (int i = 0; i < result.Length; i++)
-                {
-                    if (result[i] == null)
-                        result[i] = new List<string>();
-
-                    result[i].Add(rowValues[i]);
-                }
-            }
-
-            return result;
-        }
-
-        List<T> GetData<T>(List<PropertyInfo?> properties)
-        {
-            var data = new List<T>();
-
-            for (int y = 1; true; y++)
-            {
-                var wasEmpty = true;
                 T entry = Activator.CreateInstance<T>();
 
-                for (int x = 0; x < properties.Count; x++)
+                foreach (var property in properties)
                 {
-                    var value = m_Document.GetCellValueAsString(Cell(x, y));
+                    var value = document.GetCellValueAsString(Cell(property.Value, y));
 
-                    if (string.IsNullOrEmpty(value))
-                        break;
-
-                    properties[x]?.SetValue(entry, Convert.ChangeType(value,
-                        properties[x].PropertyType, CultureInfo.InvariantCulture));
-
-                    wasEmpty = false;
+                    property.Key.SetValue(entry, Convert.ChangeType(value,
+                        property.Key.PropertyType, CultureInfo.InvariantCulture));
                 }
-
-                if (wasEmpty)
-                    break;
 
                 data.Add(entry);
             }
 
             return data;
-        }
-
-        internal void AutoFit()
-        {
-            foreach (var worksheet in m_Document.GetWorksheetNames())
-            {
-                m_Document.SelectWorksheet(worksheet);
-
-                for (int x = 0; true; x++)
-                {
-                    if (!m_Document.HasCellValue(Cell(x, 0)))
-                        break;
-
-                    m_Document.AutoFitColumn(Cell(x, 0));
-                }
-            }
         }
     }
 }

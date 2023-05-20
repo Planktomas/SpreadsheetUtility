@@ -21,8 +21,10 @@ using (var spreadsheet = new Spreadsheet("Company.xlsx"))
 
 class Employee
 {
-    public string Name { get; set; }
-    public string Position { get; set; }
+    public string? Name { get; set; }
+    public string? Position { get; set; }
+
+    [Format("0$")]
     public decimal Salary { get; set; }
 
     public Employee() { }
