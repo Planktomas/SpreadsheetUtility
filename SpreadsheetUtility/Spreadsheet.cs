@@ -6,9 +6,9 @@ namespace SpreadsheetUtility
 {
     public class Spreadsheet : IDisposable
     {
-        static readonly ObjectDisposedException m_DisposedException = new($"Spreadsheet has been disposed");
+        static readonly ObjectDisposedException k_DisposedException = new($"Spreadsheet has been disposed");
 
-        readonly string m_Path;
+        readonly string k_Path;
 
         SLDocument? m_Document;
 
@@ -17,7 +17,7 @@ namespace SpreadsheetUtility
             get
             {
                 if (m_Document == null)
-                    throw m_DisposedException;
+                    throw k_DisposedException;
 
                 return m_Document;
             }
@@ -29,10 +29,10 @@ namespace SpreadsheetUtility
         /// <param name="path">Path to file.</param>
         public Spreadsheet(string path)
         {
-            m_Path = path;
+            k_Path = path;
 
-            if (File.Exists(m_Path))
-                m_Document = new SLDocument(m_Path);
+            if (File.Exists(k_Path))
+                m_Document = new SLDocument(k_Path);
             else
                 m_Document = new SLDocument();
         }
@@ -40,7 +40,7 @@ namespace SpreadsheetUtility
         public void Dispose()
         {
             this.AutoFit();
-            Document.SaveAs(m_Path);
+            Document.SaveAs(k_Path);
             Document.Dispose();
             m_Document = null;
 
