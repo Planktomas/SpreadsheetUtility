@@ -1,16 +1,50 @@
 ﻿using SpreadsheetLight;
+using System.Drawing;
 using System.Reflection;
 
 namespace SpreadsheetUtility
 {
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
     public class FormatAttribute : Attribute
     {
         public string FormatCode { get; }
 
+        /// <summary>
+        /// Applies specific format to column. 
+        /// <see cref="https://support.microsoft.com/en-au/office/number-format-codes-5026bbd6-04bc-48cd-bf33-80f18b4eae68">See Microsoft format code documentation.</see>
+        /// </summary>
         public FormatAttribute(string formatCode)
         {
             FormatCode = formatCode;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
+    public class ColorScaleAttribute : Attribute
+    {
+        const string k_NeutralColor = "#FFFFFF";
+
+        public string ColorLow { get; }
+        public string ColorMiddle { get; } = k_NeutralColor;
+        public string ColorHigh { get; }
+
+        /// <summary>
+        /// Applies color scale formatting to column.
+        /// Able to apply both HTML color codes (For example: #FF00FF)
+        /// and color names (For example: AliceBlue).
+        /// <see cref="https://learn.microsoft.com/en-us/power-platform/power-fx/reference/function-colors">See Microsoft color value documentation.</see>
+        /// </summary>
+        public ColorScaleAttribute(string colorLow, string colorHigh)
+        {
+            ColorLow = colorLow;
+            ColorHigh = colorHigh;
+        }
+
+        public ColorScaleAttribute(string colorLow, string colorMiddle, string colorHigh)
+        {
+            ColorLow = colorLow;
+            ColorMiddle = colorMiddle;
+            ColorHigh = colorHigh;
         }
     }
 
@@ -27,9 +61,18 @@ namespace SpreadsheetUtility
                     switch (attribute)
                     {
                         case FormatAttribute formatAttribute:
-                            SLStyle style = spreadsheet.Document.GetColumnStyle(i + 1);
+                            var style = spreadsheet.Document.GetColumnStyle(i + 1);
                             style.FormatCode = formatAttribute.FormatCode;
                             spreadsheet.Document.SetColumnStyle(i + 1, style);
+                            break;
+
+                        case ColorScaleAttribute colorScaleAttribute:
+                            var colorScale = new SLConditionalFormatting(0, i + 1, int.MaxValue, i + 1);
+                            colorScale.SetCustom3ColorScale(
+                                SLConditionalFormatMinMaxValues.Percentile, "0", ColorTranslator.FromHtml(colorScaleAttribute.ColorLow),
+                                SLConditionalFormatRangeValues.Percentile, "50", ColorTranslator.FromHtml(colorScaleAttribute.ColorMiddle),
+                                SLConditionalFormatMinMaxValues.Percentile, "100", ColorTranslator.FromHtml(colorScaleAttribute.ColorHigh));
+                            spreadsheet.Document.AddConditionalFormatting(colorScale);
                             break;
                     }
                 }
