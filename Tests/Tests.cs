@@ -78,16 +78,16 @@ namespace Tests
 
             using (var spreadsheet = new Spreadsheet(k_SpreadsheetFilename))
             {
-                Assert.That(spreadsheet?.document.GetCellValueAsString("A1"), Is.Empty);
+                Assert.That(spreadsheet?.Document.GetCellValueAsString("A1"), Is.Empty);
 
                 spreadsheet.Write(Simple.One);
 
-                Assert.That(spreadsheet?.document.GetCellValueAsString("A1"), Is.Not.Empty);
+                Assert.That(spreadsheet?.Document.GetCellValueAsString("A1"), Is.Not.Empty);
             }
 
             using (var spreadsheet = new Spreadsheet(k_SpreadsheetFilename))
             {
-                Assert.That(spreadsheet?.document.GetCellValueAsString("A1"), Is.Not.Empty,
+                Assert.That(spreadsheet?.Document.GetCellValueAsString("A1"), Is.Not.Empty,
                     "When reopening spreadsheet we should be able to read data that is in it");
             }
         }
@@ -138,15 +138,15 @@ namespace Tests
             using var spreadsheet = new Spreadsheet(k_SpreadsheetFilename);
             spreadsheet.Write(AutoFit.Headers);
 
-            var shortColumnPrevWidth = spreadsheet?.document.GetColumnWidth("A1");
-            var longColumnPrevWidth = spreadsheet?.document.GetColumnWidth("B1");
+            var shortColumnPrevWidth = spreadsheet?.Document.GetColumnWidth("A1");
+            var longColumnPrevWidth = spreadsheet?.Document.GetColumnWidth("B1");
 
             spreadsheet?.AutoFit();
 
             Assert.Multiple(() =>
             {
-                Assert.That(spreadsheet?.document.GetColumnWidth("A1"), Is.LessThan(shortColumnPrevWidth));
-                Assert.That(spreadsheet?.document.GetColumnWidth("B1"), Is.GreaterThan(longColumnPrevWidth));
+                Assert.That(spreadsheet?.Document.GetColumnWidth("A1"), Is.LessThan(shortColumnPrevWidth));
+                Assert.That(spreadsheet?.Document.GetColumnWidth("B1"), Is.GreaterThan(longColumnPrevWidth));
             });
         }
 
@@ -161,20 +161,20 @@ namespace Tests
                 spreadsheet.Write(AutoFit.Headers);
                 spreadsheet.AutoFit();
 
-                shortHeaderWidth = spreadsheet?.document.GetColumnWidth("A1");
-                longHeaderWidth = spreadsheet?.document.GetColumnWidth("B1");
+                shortHeaderWidth = spreadsheet?.Document.GetColumnWidth("A1");
+                longHeaderWidth = spreadsheet?.Document.GetColumnWidth("B1");
             }
 
             using (var spreadsheet = new Spreadsheet(k_SpreadsheetFilename2))
             {
                 spreadsheet.Write(AutoFit.Values);
-                var shortColumnPrevWidth = spreadsheet?.document.GetColumnWidth("A1");
-                var longColumnPrevWidth = spreadsheet?.document.GetColumnWidth("B1");
+                var shortColumnPrevWidth = spreadsheet?.Document.GetColumnWidth("A1");
+                var longColumnPrevWidth = spreadsheet?.Document.GetColumnWidth("B1");
 
                 spreadsheet?.AutoFit();
 
-                var shortColumnWidth = spreadsheet?.document.GetColumnWidth("A1");
-                var longColumnWidth = spreadsheet?.document.GetColumnWidth("B1");
+                var shortColumnWidth = spreadsheet?.Document.GetColumnWidth("A1");
+                var longColumnWidth = spreadsheet?.Document.GetColumnWidth("B1");
 
                 Assert.Multiple(() =>
                 {
@@ -198,10 +198,10 @@ namespace Tests
 
             Assert.Multiple(() =>
             {
-                Assert.That(spreadsheet?.document.GetCellValueAsString("A1"), Is.EqualTo(nameof(Simple.Text)));
-                Assert.That(spreadsheet?.document.GetCellValueAsString("A2"), Is.EqualTo("1"));
-                Assert.That(spreadsheet?.document.GetCellValueAsString("A3"), Is.EqualTo("2"));
-                Assert.That(spreadsheet?.document.GetCellValueAsString("A4"), Is.EqualTo("3"));
+                Assert.That(spreadsheet?.Document.GetCellValueAsString("A1"), Is.EqualTo(nameof(Simple.Text)));
+                Assert.That(spreadsheet?.Document.GetCellValueAsString("A2"), Is.EqualTo("1"));
+                Assert.That(spreadsheet?.Document.GetCellValueAsString("A3"), Is.EqualTo("2"));
+                Assert.That(spreadsheet?.Document.GetCellValueAsString("A4"), Is.EqualTo("3"));
             });
         }
 
@@ -212,28 +212,72 @@ namespace Tests
             spreadsheet.Write(Simple.Three);
             spreadsheet.Write(AutoFit.Values);
 
-            Assert.That(spreadsheet?.document.GetCurrentWorksheetName(), Is.EqualTo(nameof(AutoFit)));
+            Assert.That(spreadsheet?.Document.GetCurrentWorksheetName(), Is.EqualTo(nameof(AutoFit)));
 
             Assert.Multiple(() =>
             {
-                Assert.That(spreadsheet.document.GetCellValueAsString("A1"), Is.EqualTo(nameof(AutoFit.S)));
-                Assert.That(spreadsheet.document.GetCellValueAsString("B1"), Is.EqualTo(nameof(AutoFit.LongLongLongLong)));
-                Assert.That(spreadsheet.document.GetCellValueAsString("A2"), Is.EqualTo("Short"));
+                Assert.That(spreadsheet.Document.GetCellValueAsString("A1"), Is.EqualTo(nameof(AutoFit.S)));
+                Assert.That(spreadsheet.Document.GetCellValueAsString("B1"), Is.EqualTo(nameof(AutoFit.LongLongLongLong)));
+                Assert.That(spreadsheet.Document.GetCellValueAsString("A2"), Is.EqualTo("Short"));
             });
 
-            spreadsheet.document.SelectWorksheet(nameof(Simple));
+            spreadsheet.Document.SelectWorksheet(nameof(Simple));
 
-            Assert.That(spreadsheet.document.GetCurrentWorksheetName(), Is.EqualTo(nameof(Simple)));
+            Assert.That(spreadsheet.Document.GetCurrentWorksheetName(), Is.EqualTo(nameof(Simple)));
 
             Assert.Multiple(() =>
             {
-                Assert.That(spreadsheet.document.GetCellValueAsString("A1"), Is.EqualTo(nameof(Simple.Text)));
-                Assert.That(spreadsheet.document.GetCellValueAsString("A2"), Is.EqualTo("1"));
-                Assert.That(spreadsheet.document.GetCellValueAsString("A3"), Is.EqualTo("2"));
-                Assert.That(spreadsheet.document.GetCellValueAsString("A4"), Is.EqualTo("3"));
+                Assert.That(spreadsheet.Document.GetCellValueAsString("A1"), Is.EqualTo(nameof(Simple.Text)));
+                Assert.That(spreadsheet.Document.GetCellValueAsString("A2"), Is.EqualTo("1"));
+                Assert.That(spreadsheet.Document.GetCellValueAsString("A3"), Is.EqualTo("2"));
+                Assert.That(spreadsheet.Document.GetCellValueAsString("A4"), Is.EqualTo("3"));
             });
 
-            Assert.That(spreadsheet.document.GetWorksheetNames(), Has.Count.EqualTo(2));
+            Assert.That(spreadsheet.Document.GetWorksheetNames(), Has.Count.EqualTo(2));
+        }
+
+        [Test]
+        public void Read_WithOneSimpleObject_Works()
+        {
+            Write_WithMultipleObjects_Works();
+
+            using var spreadsheet = new Spreadsheet(k_SpreadsheetFilename);
+            var data = spreadsheet.Read<Simple>();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(data, Is.Not.Null);
+                Assert.That(data?.ElementAt(0).Text, Is.EqualTo("1"));
+                Assert.That(data?.ElementAt(1).Text, Is.EqualTo("2"));
+                Assert.That(data?.ElementAt(2).Text, Is.EqualTo("3"));
+            });
+        }
+
+        [Test]
+        public void Read_WithMultipleObjects_Works()
+        {
+            Write_WithMultipleObjects_Works();
+
+            using var spreadsheet = new Spreadsheet(k_SpreadsheetFilename);
+            var simpleData = spreadsheet.Read<Simple>() as List<Simple>;
+            var autoFitData = spreadsheet.Read<AutoFit>() as List<AutoFit>;
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(simpleData, Is.Not.Null);
+                Assert.That(simpleData, Has.Count.EqualTo(Simple.Three.Length));
+                Assert.That(simpleData?.ElementAt(0).Text, Is.EqualTo(Simple.Three[0].Text));
+                Assert.That(simpleData?.ElementAt(1).Text, Is.EqualTo(Simple.Three[1].Text));
+                Assert.That(simpleData?.ElementAt(2).Text, Is.EqualTo(Simple.Three[2].Text));
+            });
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(autoFitData, Is.Not.Null);
+                Assert.That(autoFitData, Has.Count.EqualTo(AutoFit.Values.Length));
+                Assert.That(autoFitData?.ElementAt(0).S, Is.EqualTo(AutoFit.Values[0].S));
+                Assert.That(autoFitData?.ElementAt(0).LongLongLongLong, Is.EqualTo(AutoFit.Values[0].LongLongLongLong));
+            });
         }
     }
 }
