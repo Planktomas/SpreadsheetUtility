@@ -6,13 +6,13 @@ namespace SpreadsheetUtility
 {
     public class Spreadsheet : IDisposable
     {
-        static ObjectDisposedException m_DisposedException = new($"Spreadsheet has been disposed");
+        static readonly ObjectDisposedException m_DisposedException = new($"Spreadsheet has been disposed");
 
         readonly string m_Path;
 
         SLDocument? m_Document;
 
-        internal SLDocument document
+        internal SLDocument Document
         {
             get
             {
@@ -40,8 +40,8 @@ namespace SpreadsheetUtility
         public void Dispose()
         {
             this.AutoFit();
-            document.SaveAs(m_Path);
-            document.Dispose();
+            Document.SaveAs(m_Path);
+            Document.Dispose();
             m_Document = null;
 
             GC.SuppressFinalize(this);
@@ -98,28 +98,28 @@ namespace SpreadsheetUtility
 
         bool SelectWorksheet(string name, bool canCreate = true)
         {
-            var selectResult = document.SelectWorksheet(name);
+            var selectResult = Document.SelectWorksheet(name);
 
             if (!canCreate || selectResult)
                 return selectResult;
 
-            return document.AddWorksheet(name);
+            return Document.AddWorksheet(name);
         }
 
         void SelectAndClearWorksheet(string name)
         {
-            document.AddWorksheet(SLDocument.DefaultFirstSheetName);
+            Document.AddWorksheet(SLDocument.DefaultFirstSheetName);
 
-            document.DeleteWorksheet(name);
+            Document.DeleteWorksheet(name);
             SelectWorksheet(name);
 
-            document.DeleteWorksheet(SLDocument.DefaultFirstSheetName);
+            Document.DeleteWorksheet(SLDocument.DefaultFirstSheetName);
         }
 
         void WriteHeaders(PropertyInfo[] properties)
         {
             for (int i = 0; i < properties.Length; i++)
-                document.SetCellValue(Cell(i, 0), properties[i].Name);
+                Document.SetCellValue(Cell(i, 0), properties[i].Name);
         }
 
         void WriteData<T>(PropertyInfo[] properties, IEnumerable<T> source)
@@ -136,9 +136,9 @@ namespace SpreadsheetUtility
                     typeof(string), CultureInfo.InvariantCulture);
 
                 if (properties[x].PropertyType == typeof(string))
-                    document.SetCellValue(Cell(x, row), value);
+                    Document.SetCellValue(Cell(x, row), value);
                 else
-                    document.SetCellValueNumeric(Cell(x, row), value);
+                    Document.SetCellValueNumeric(Cell(x, row), value);
             }
         }
 
@@ -149,7 +149,7 @@ namespace SpreadsheetUtility
 
             for (var i = 0; true; i++)
             {
-                var label = document.GetCellValueAsString(Cell(i, 0));
+                var label = Document.GetCellValueAsString(Cell(i, 0));
 
                 if (string.IsNullOrEmpty(label))
                     break;
@@ -167,15 +167,15 @@ namespace SpreadsheetUtility
 
         IEnumerable<T> ReadData<T>(Dictionary<PropertyInfo, int> properties)
         {
-            var data = new List<T>(document.GetWorksheetStatistics().EndRowIndex + 1);
+            var data = new List<T>(Document.GetWorksheetStatistics().EndRowIndex + 1);
 
-            for (int y = 1; y < document.GetWorksheetStatistics().EndRowIndex; y++)
+            for (int y = 1; y < Document.GetWorksheetStatistics().EndRowIndex; y++)
             {
                 T entry = Activator.CreateInstance<T>();
 
                 foreach (var property in properties)
                 {
-                    var value = document.GetCellValueAsString(Cell(property.Value, y));
+                    var value = Document.GetCellValueAsString(Cell(property.Value, y));
 
                     property.Key.SetValue(entry, Convert.ChangeType(value,
                         property.Key.PropertyType, CultureInfo.InvariantCulture));
