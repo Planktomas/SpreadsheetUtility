@@ -5,11 +5,28 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>Spreadsheet Utility</Title>
+    <PackageProjectUrl>https://github.com/Planktomas/SpreadsheetUtility</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Planktomas/SpreadsheetUtility</RepositoryUrl>
+    <PackageTags>excel;spreadsheet;utility;sheet;lightweight;report;xlsx;xls;review;analysis;data</PackageTags>
+    <Authors>Tomas Kucinskas</Authors>
+    <Version>1.1.0</Version>
+    <Description>Ultra lightweight spreadsheet utility to display processed collections of data and occasionally reading it.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="SpreadsheetLight.Cross.Platform" Version="3.5.1" />
     <InternalsVisibleTo Include="Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
