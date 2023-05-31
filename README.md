@@ -7,9 +7,11 @@ Ultra lightweight spreadsheet utility to display processed collections of data a
 #### Features
 + Uses XLSX file format
 + Writes public properties of a collection into a dedicated worksheet
-+ Reads worksheet data into tuple enumerator
++ Reads worksheet data into an enumerator(List)
 + Supports multiple worksheets
 + Auto fits columns for comfortable viewing
++ Supports custom string formatting
++ Supports color scale formatting
 
 #### Tutorial
 
@@ -18,9 +20,14 @@ Let's create an employee class to store in a spreadsheet.
 ```cs
 class Employee
 {
-    public string Name { get; set; }
-    public string Position { get; set; }
+    public string? Name { get; set; }
+    public string? Position { get; set; }
+
+    [Format("0$")]
+    [ColorScale("red", "#00FF00" /* green */)]
     public decimal Salary { get; set; }
+
+    public Employee() { }
 
     public Employee(string name, string position, decimal salary)
     {
@@ -37,6 +44,8 @@ Now we can make an array of company's employees.
 var employees = new[]
 {
     new Employee("John", "CEO", 10000),
+    new Employee("Steve", "Manager", 6000),
+    new Employee("Will", "Senior Software Engineer", 4000),
     new Employee("Kate", "Software Engineer", 2000),
     new Employee("Paul", "Quality Assurance", 1000)
 };
@@ -53,29 +62,20 @@ using (var spreadsheet = new Spreadsheet("Company.xlsx"))
 
 Here is how this data looks in the spreadsheet.
 
-<img src="https://user-images.githubusercontent.com/94010480/235367459-c488f500-2f01-440e-9653-e3a8f895550d.png" width="350" height="220" />
+<img src="https://github.com/Planktomas/SpreadsheetUtility/assets/94010480/155379da-b753-4069-a057-4022192345e5.png" width="350" height="220" />
 
 And if we need to read some of that data back, we can do it too.
 
 ```cs
 using (var spreadsheet = new Spreadsheet("Company.xlsx"))
 {
-    IEnumerable<(decimal Salary, string Position)> salaries;
-
-    salaries = spreadsheet.Read<decimal, string>(typeof(Employee),
-        nameof(Employee.Salary), nameof(Employee.Position));
+    foreach (var employee in spreadsheet.Read<Employee>())
+    {
+        Console.WriteLine($"Salary: {employee.Salary} \t Position: {employee.Position}");
+    }
 }
 ```
 
-We can verify the results just to be sure we got the right data.
-
-```cs
-foreach (var item in salaries)
-{
-    Console.WriteLine($"Salary: {item.Salary} \t Position: {item.Position}");
-}
-```
-
-<img src="https://user-images.githubusercontent.com/94010480/235367385-1bedc612-0d15-410e-b262-cb82b61601ae.png" width="400" height="90" />
+<img src="https://github.com/Planktomas/SpreadsheetUtility/assets/94010480/5354153c-b40e-436d-9619-9652f3082cc0.png" width="520" height="160" />
 
 [You can review the whole tutorial here](https://github.com/Planktomas/SpreadsheetUtility/blob/main/Tutorial/Program.cs)
