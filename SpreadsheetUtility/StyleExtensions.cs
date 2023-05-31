@@ -40,6 +40,12 @@ namespace SpreadsheetUtility
             ColorHigh = colorHigh;
         }
 
+        /// <summary>
+        /// Applies color scale formatting to column.
+        /// Able to apply both HTML color codes (For example: #FF00FF)
+        /// and color names (For example: AliceBlue).
+        /// <see cref="https://learn.microsoft.com/en-us/power-platform/power-fx/reference/function-colors">See Microsoft color value documentation.</see>
+        /// </summary>
         public ColorScaleAttribute(string colorLow, string colorMiddle, string colorHigh)
         {
             ColorLow = colorLow;
