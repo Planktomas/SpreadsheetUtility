@@ -25,6 +25,7 @@ class Employee
     public string? Position { get; set; }
 
     [Format("0$")]
+    [ColorScale("red", "#00FF00" /* green */)]
     public decimal Salary { get; set; }
 
     public Employee() { }
