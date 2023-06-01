@@ -45,6 +45,12 @@ namespace Tests
             public static AutoFit[] Values = new[] { new AutoFit("Short", "LongLongLongLongLongLong") };
         }
 
+        [Layout(Flow.Horizontal)]
+        class Horizontal { }
+
+        [Layout(Flow.Vertical)]
+        class Vertical { }
+
         [TearDown]
         public void TearDown()
         {
@@ -55,20 +61,26 @@ namespace Tests
             File.Delete(k_SpreadsheetFilename2);
         }
 
-        [TestCase(0, 0, "A1", TestName = "Cell: 0x0 -> A1")]
-        [TestCase(6, 1, "G2", TestName = "Cell: 6x1 -> G2")]
-        [TestCase(25, 0, "Z1", TestName = "Cell: 25x0 -> Z1")]
-        [TestCase(26, 0, "AA1", TestName = "Cell: 26x0 -> AA1")]
-        [TestCase(27, 0, "AB1", TestName = "Cell: 27x0 -> AB1")]
-        [TestCase(30, 0, "AE1", TestName = "Cell: 30x0 -> AE1")]
-        [TestCase(51, 0, "AZ1", TestName = "Cell: 51x0 -> AZ1")]
-        [TestCase(52, 0, "BA1", TestName = "Cell: 52x0 -> BA1")]
-        [TestCase(701, 0, "ZZ1", TestName = "Cell: 701x0 -> ZZ1")]
-        [TestCase(702, 0, "AAA1", TestName = "Cell: 702x0 -> AAA1")]
-        [TestCase(950, 950, "AJO951", TestName = "Cell: 950x950 -> AJO951")]
-        [TestCase(2023, 2023, "BYV2024", TestName = "Cell: 2023x2023 -> BYV2024")]
-        public void Cell_ConvertsXYToCellCoordinates(int x, int y, string expectedResult)
+        [TestCase(0, 0, typeof(Horizontal), "A1", TestName = "Cell(Horizontal): 0x0 -> A1")]
+        [TestCase(6, 1, typeof(Horizontal), "G2", TestName = "Cell(Horizontal): 6x1 -> G2")]
+        [TestCase(25, 0, typeof(Horizontal), "Z1", TestName = "Cell(Horizontal): 25x0 -> Z1")]
+        [TestCase(26, 0, typeof(Horizontal), "AA1", TestName = "Cell(Horizontal): 26x0 -> AA1")]
+        [TestCase(27, 0, typeof(Horizontal), "AB1", TestName = "Cell(Horizontal): 27x0 -> AB1")]
+        [TestCase(30, 0, typeof(Horizontal), "AE1", TestName = "Cell(Horizontal): 30x0 -> AE1")]
+        [TestCase(51, 0, typeof(Horizontal), "AZ1", TestName = "Cell(Horizontal): 51x0 -> AZ1")]
+        [TestCase(52, 0, typeof(Horizontal), "BA1", TestName = "Cell(Horizontal): 52x0 -> BA1")]
+        [TestCase(701, 0, typeof(Horizontal), "ZZ1", TestName = "Cell(Horizontal): 701x0 -> ZZ1")]
+        [TestCase(702, 0, typeof(Horizontal), "AAA1", TestName = "Cell(Horizontal): 702x0 -> AAA1")]
+        [TestCase(950, 950, typeof(Horizontal), "AJO951", TestName = "Cell(Horizontal): 950x950 -> AJO951")]
+        [TestCase(2023, 2023, typeof(Horizontal), "BYV2024", TestName = "Cell(Horizontal): 2023x2023 -> BYV2024")]
+
+        [TestCase(0, 1, typeof(Vertical), "B1", TestName = "Cell(Vertical): 0x1 -> B1")]
+        [TestCase(6, 2, typeof(Vertical), "C7", TestName = "Cell(Vertical): 6x2 -> C7")]
+        [TestCase(9, 25, typeof(Vertical), "Z10", TestName = "Cell(Vertical): 9x25 -> Z10")]
+        [TestCase(10, 26, typeof(Vertical), "AA11", TestName = "Cell(Vertical): 10x26 -> AA11")]
+        public void Cell_ConvertsXYToCellCoordinates(int x, int y, Type type, string expectedResult)
         {
+            using var layout = new LayoutScope(type);
             Assert.That(Spreadsheet.Cell(x, y), Is.EqualTo(expectedResult));
         }
 

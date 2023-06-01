@@ -24,6 +24,8 @@ namespace SpreadsheetUtility
             }
         }
 
+        internal static bool IsVerticalFlow => LayoutScope.s_Flow == Flow.Vertical;
+
         /// <summary>
         /// Creates or opens an XLSX format spreadsheet.
         /// </summary>
@@ -58,6 +60,13 @@ namespace SpreadsheetUtility
 
             var coord = string.Empty;
 
+            if(IsVerticalFlow)
+            {
+                var temp = x;
+                x = y;
+                y = temp;
+            }
+
             do
             {
                 coord = (char)('A' + (x % Range)) + coord;
@@ -78,6 +87,7 @@ namespace SpreadsheetUtility
         {
             var name = sheetName ?? typeof(T).Name;
             var properties = typeof(T).GetProperties().ToDictionary(p => p.Name);
+            using var layoutScope = new LayoutScope(typeof(T));
 
             if (!SelectSheet(name, false))
                 return null;
@@ -96,6 +106,7 @@ namespace SpreadsheetUtility
         {
             var name = sheetName ?? typeof(T).Name;
             var properties = typeof(T).GetProperties();
+            using var layoutScope = new LayoutScope(typeof(T));
 
             SelectAndClearSheet(name);
             WriteHeaders(properties);
@@ -212,9 +223,11 @@ namespace SpreadsheetUtility
 
         IEnumerable<T> ReadData<T>(Dictionary<PropertyInfo, int> properties)
         {
-            var data = new List<T>(Document.GetWorksheetStatistics().EndRowIndex + 1);
+            var statistics = Document.GetWorksheetStatistics();
+            var endIndex = IsVerticalFlow ? statistics.EndColumnIndex : statistics.EndRowIndex;
+            var data = new List<T>(endIndex + 1);
 
-            for (int y = 1; y < Document.GetWorksheetStatistics().EndRowIndex; y++)
+            for (int y = 1; y < endIndex; y++)
             {
                 T entry = Activator.CreateInstance<T>();
 

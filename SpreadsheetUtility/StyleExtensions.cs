@@ -4,6 +4,9 @@ using System.Reflection;
 
 namespace SpreadsheetUtility
 {
+    /// <summary>
+    /// Applies specific format to column. 
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
     public class FormatAttribute : Attribute
     {
@@ -19,6 +22,11 @@ namespace SpreadsheetUtility
         }
     }
 
+    /// <summary>
+    /// Applies color scale formatting to column.
+    /// Able to apply both HTML color codes (For example: #FF00FF)
+    /// and color names (For example: AliceBlue).
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
     public class ColorScaleAttribute : Attribute
     {
@@ -69,12 +77,22 @@ namespace SpreadsheetUtility
                         case FormatAttribute formatAttribute:
                             var style = spreadsheet.Document.GetColumnStyle(i + 1);
                             style.FormatCode = formatAttribute.FormatCode;
-                            spreadsheet.Document.SetColumnStyle(i + 1, style);
+
+                            if(Spreadsheet.IsVerticalFlow)
+                                spreadsheet.Document.SetRowStyle(i + 1, style);
+                            else
+                                spreadsheet.Document.SetColumnStyle(i + 1, style);
                             break;
 
                         case ColorScaleAttribute colorScaleAttribute:
-                            var colorScale = new SLConditionalFormatting(0, i + 1, int.MaxValue, i + 1);
-                            colorScale.SetCustom3ColorScale(
+
+                            SLConditionalFormatting? colorScale = null;
+                            if(Spreadsheet.IsVerticalFlow)
+                                colorScale = new SLConditionalFormatting(i + 1, 0, i + 1, int.MaxValue);
+                            else
+                                colorScale = new SLConditionalFormatting(0, i + 1, int.MaxValue, i + 1);
+
+                            colorScale?.SetCustom3ColorScale(
                                 SLConditionalFormatMinMaxValues.Percentile, "0", ColorTranslator.FromHtml(colorScaleAttribute.ColorLow),
                                 SLConditionalFormatRangeValues.Percentile, "50", ColorTranslator.FromHtml(colorScaleAttribute.ColorMiddle),
                                 SLConditionalFormatMinMaxValues.Percentile, "100", ColorTranslator.FromHtml(colorScaleAttribute.ColorHigh));
