@@ -6,11 +6,13 @@ namespace SpreadsheetUtility
 {
     public class Spreadsheet : IDisposable
     {
-        static readonly ObjectDisposedException k_DisposedException = new($"Spreadsheet has been disposed");
+        static readonly ObjectDisposedException k_DisposedException = new($"Spreadsheet has been disposed.");
+        static readonly ArgumentException k_UnknownSheetException = new("Sheet does not exist in the spreadsheet.");
 
         readonly string k_Path;
 
         SLDocument? m_Document;
+        string? m_StartupSheet;
 
         internal SLDocument Document
         {
@@ -40,6 +42,10 @@ namespace SpreadsheetUtility
         public void Dispose()
         {
             this.AutoFit();
+
+            if(m_StartupSheet != null)
+                Document.SelectWorksheet(m_StartupSheet);
+
             Document.SaveAs(k_Path);
             Document.Dispose();
             m_Document = null;
@@ -64,39 +70,53 @@ namespace SpreadsheetUtility
         }
 
         /// <summary>
-        /// Reads the worksheet of the type provided.
+        /// Reads the sheet of the type provided.
         /// </summary>
-        /// <typeparam name="T">Type identifying a worksheet</typeparam>
+        /// <typeparam name="T">Type identifying a sheet</typeparam>
         /// <returns>A collection of provided type instances with public instance properties having assigned read values.</returns>
         public IEnumerable<T>? Read<T>()
         {
-            var worksheet = typeof(T).Name;
+            var sheetName = typeof(T).Name;
             var properties = typeof(T).GetProperties().ToDictionary(p => p.Name);
 
-            if (!SelectWorksheet(worksheet, false))
+            if (!SelectSheet(sheetName, false))
                 return null;
 
-            var worksheetProperties = GetWorksheetProperties<T>();
-            return ReadData<T>(worksheetProperties);
+            var sheetProperties = GetSheetProperties<T>();
+            return ReadData<T>(sheetProperties);
         }
 
         /// <summary>
-        /// Creates or updates worksheet with data from the collection provided.
+        /// Creates or updates sheet with data from the collection provided.
         /// </summary>
-        /// <typeparam name="T">Type identifying worksheet.</typeparam>
+        /// <typeparam name="T">Type identifying sheet.</typeparam>
         /// <param name="source">Collection to be used as data source.</param>
         public void Write<T>(IEnumerable<T> source)
         {
-            var worksheet = typeof(T).Name;
+            var sheetName = typeof(T).Name;
             var properties = typeof(T).GetProperties();
 
-            SelectAndClearWorksheet(worksheet);
+            SelectAndClearSheet(sheetName);
             WriteHeaders(properties);
             WriteData(properties, source);
-            this.ApplyWorksheetAttributes<T>(properties);
+            this.ApplySheetAttributes<T>(properties);
         }
 
-        bool SelectWorksheet(string name, bool canCreate = true)
+        /// <summary>
+        /// Sets a sheet that will be selected when opening *.xlsx file.
+        /// </summary>
+        /// <typeparam name="T">Type identifying sheet.</typeparam>
+        public void SetStartupSheet<T>()
+        {
+            var sheetName = typeof(T).Name;
+
+            if (!Document.GetWorksheetNames().Contains(sheetName))
+                throw k_UnknownSheetException;
+
+            m_StartupSheet = sheetName;
+        }
+
+        bool SelectSheet(string name, bool canCreate = true)
         {
             var selectResult = Document.SelectWorksheet(name);
 
@@ -106,12 +126,12 @@ namespace SpreadsheetUtility
             return Document.AddWorksheet(name);
         }
 
-        void SelectAndClearWorksheet(string name)
+        void SelectAndClearSheet(string name)
         {
             Document.AddWorksheet(SLDocument.DefaultFirstSheetName);
 
             Document.DeleteWorksheet(name);
-            SelectWorksheet(name);
+            SelectSheet(name);
 
             Document.DeleteWorksheet(SLDocument.DefaultFirstSheetName);
         }
@@ -142,10 +162,10 @@ namespace SpreadsheetUtility
             }
         }
 
-        Dictionary<PropertyInfo, int> GetWorksheetProperties<T>()
+        Dictionary<PropertyInfo, int> GetSheetProperties<T>()
         {
             var typeProperties = typeof(T).GetProperties();
-            var worksheetProperties = new Dictionary<PropertyInfo, int>();
+            var sheetProperties = new Dictionary<PropertyInfo, int>();
 
             for (var i = 0; true; i++)
             {
@@ -159,10 +179,10 @@ namespace SpreadsheetUtility
                 if (labelProperty == null)
                     continue;
 
-                worksheetProperties[labelProperty] = i;
+                sheetProperties[labelProperty] = i;
             }
 
-            return worksheetProperties;
+            return sheetProperties;
         }
 
         IEnumerable<T> ReadData<T>(Dictionary<PropertyInfo, int> properties)

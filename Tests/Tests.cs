@@ -279,5 +279,25 @@ namespace Tests
                 Assert.That(autoFitData?.ElementAt(0).LongLongLongLong, Is.EqualTo(AutoFit.Values[0].LongLongLongLong));
             });
         }
+
+        [Test]
+        public void SetStartupSheet_Works()
+        {
+            Write_WithMultipleObjects_Works();
+
+            var spreadsheet = new Spreadsheet(k_SpreadsheetFilename);
+
+            Assert.That(spreadsheet.Document.GetCurrentWorksheetName(), Is.EqualTo(nameof(AutoFit)));
+
+            spreadsheet.SetStartupSheet<Simple>();
+
+            Assert.That(spreadsheet.Document.GetCurrentWorksheetName(), Is.EqualTo(nameof(AutoFit)));
+
+            spreadsheet.Dispose();
+
+            using var reopenedSpreadsheet = new Spreadsheet(k_SpreadsheetFilename);
+
+            Assert.That(reopenedSpreadsheet.Document.GetCurrentWorksheetName(), Is.EqualTo(nameof(Simple)));
+        }
     }
 }
