@@ -71,14 +71,15 @@ namespace SpreadsheetUtility
         /// <summary>
         /// Reads the sheet of the type provided.
         /// </summary>
-        /// <typeparam name="T">Type identifying a sheet</typeparam>
+        /// <typeparam name="T">Type identifying the sheet</typeparam>
+        /// <param name="sheetName">Name identifying the sheet.</param>
         /// <returns>A collection of provided type instances with public instance properties having assigned read values.</returns>
-        public IEnumerable<T>? Read<T>()
+        public IEnumerable<T>? Read<T>(string? sheetName = null)
         {
-            var sheetName = typeof(T).Name;
+            var name = sheetName ?? typeof(T).Name;
             var properties = typeof(T).GetProperties().ToDictionary(p => p.Name);
 
-            if (!SelectSheet(sheetName, false))
+            if (!SelectSheet(name, false))
                 return null;
 
             var sheetProperties = GetSheetProperties<T>();
@@ -88,14 +89,15 @@ namespace SpreadsheetUtility
         /// <summary>
         /// Creates or updates sheet with data from the collection provided.
         /// </summary>
-        /// <typeparam name="T">Type identifying sheet.</typeparam>
+        /// <typeparam name="T">Type identifying the sheet.</typeparam>
         /// <param name="source">Collection to be used as data source.</param>
-        public void Write<T>(IEnumerable<T> source)
+        /// <param name="sheetName">Name identifying the sheet.</param>
+        public void Write<T>(IEnumerable<T> source, string? sheetName = null)
         {
-            var sheetName = typeof(T).Name;
+            var name = sheetName ?? typeof(T).Name;
             var properties = typeof(T).GetProperties();
 
-            SelectAndClearSheet(sheetName);
+            SelectAndClearSheet(name);
             WriteHeaders(properties);
             WriteData(properties, source);
             this.ApplySheetAttributes<T>(properties);
@@ -104,12 +106,17 @@ namespace SpreadsheetUtility
         /// <summary>
         /// Deletes sheet from spreadsheet.
         /// </summary>
-        /// <typeparam name="T">Type identifying sheet.</typeparam>
+        /// <typeparam name="T">Type identifying the sheet.</typeparam>
         /// <returns>Returns `true` if the operation succeeded. Otherwise `false`.</returns>
-        public bool Delete<T>()
-        {
-            var sheetName = typeof(T).Name;
+        public bool Delete<T>() => Delete(typeof(T).Name);
 
+        /// <summary>
+        /// Deletes sheet from spreadsheet.
+        /// </summary>
+        /// <param name="sheetName">Name identifying the sheet.</param>
+        /// <returns>Returns `true` if the operation succeeded. Otherwise `false`.</returns>
+        public bool Delete(string sheetName)
+        {
             Document.AddWorksheet(SLDocument.DefaultFirstSheetName);
             var result = Document.DeleteWorksheet(sheetName);
             Document.DeleteWorksheet(SLDocument.DefaultFirstSheetName);
@@ -120,12 +127,18 @@ namespace SpreadsheetUtility
         /// <summary>
         /// Sets a sheet that will be selected when opening *.xlsx file.
         /// </summary>
-        /// <typeparam name="T">Type identifying sheet.</typeparam>
-        public void SetStartupSheet<T>()
+        /// <typeparam name="T">Type identifying the sheet.</typeparam>
+        public void SetStartupSheet<T>() => SetStartupSheet(typeof(T).Name);
+
+        /// <summary>
+        /// Sets a sheet that will be selected when opening *.xlsx file.
+        /// </summary>
+        /// <param name="sheetName">Type identifying the sheet.</param>
+        public void SetStartupSheet(string sheetName)
         {
             // Ensure a valid document
             _ = Document;
-            m_StartupSheet = typeof(T).Name;
+            m_StartupSheet = sheetName;
         }
 
         bool SelectSheet(string name, bool canCreate = true)

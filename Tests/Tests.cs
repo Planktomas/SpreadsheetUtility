@@ -8,6 +8,7 @@ namespace Tests
         const string k_SpreadsheetFilename = "test.xlsx";
         const string k_SpreadsheetFilename2 = "test2.xlsx";
         const string k_FolderName = "Folder/";
+        const string k_NamedSheet = "NamedSheet";
 
         class Simple
         {
@@ -237,6 +238,15 @@ namespace Tests
         }
 
         [Test]
+        public void Write_NamedSheet_Works()
+        {
+            using var spreadsheet = new Spreadsheet(k_SpreadsheetFilename);
+            spreadsheet.Write(Simple.Three, k_NamedSheet);
+
+            Assert.That(spreadsheet.Document.GetWorksheetNames(), Contains.Item(k_NamedSheet));
+        }
+
+        [Test]
         public void Read_WithOneSimpleObject_Works()
         {
             Write_WithMultipleObjects_Works();
@@ -281,7 +291,18 @@ namespace Tests
         }
 
         [Test]
-        public void SetStartupSheet_Works()
+        public void Read_NamedSheet_Works()
+        {
+            Write_NamedSheet_Works();
+
+            using var spreadsheet = new Spreadsheet(k_SpreadsheetFilename);
+            var data = spreadsheet.Read<Simple>(k_NamedSheet);
+
+            Assert.That(data, Is.Not.Null);
+        }
+
+        [Test]
+        public void SetStartupSheet_IdentifiedByType_Works()
         {
             Write_WithMultipleObjects_Works();
 
@@ -301,7 +322,23 @@ namespace Tests
         }
 
         [Test]
-        public void Delete_Works()
+        public void SetStartupSheet_IdentifiedByName_Works()
+        {
+            using (var spreadsheet = new Spreadsheet(k_SpreadsheetFilename))
+            {
+                spreadsheet.Write(Simple.Three, k_NamedSheet);
+                spreadsheet.Write(AutoFit.Values);
+                spreadsheet.SetStartupSheet(k_NamedSheet);
+            }
+
+            using (var spreadsheet = new Spreadsheet(k_SpreadsheetFilename))
+            {
+                Assert.That(spreadsheet.Document.GetCurrentWorksheetName(), Is.EqualTo(k_NamedSheet));
+            }
+        }
+
+        [Test]
+        public void Delete_IdentifiedByType_Works()
         {
             using var spreadsheet = new Spreadsheet(k_SpreadsheetFilename);
             spreadsheet.Write(Simple.Three);
@@ -311,6 +348,19 @@ namespace Tests
             spreadsheet.Delete<Simple>();
 
             Assert.That(spreadsheet.Read<Simple>(), Is.Null);
+        }
+
+        [Test]
+        public void Delete_IdentifiedByName_Works()
+        {
+            using var spreadsheet = new Spreadsheet(k_SpreadsheetFilename);
+            spreadsheet.Write(Simple.Three, k_NamedSheet);
+
+            Assert.That(spreadsheet.Read<Simple>(k_NamedSheet), Is.Not.Null);
+
+            spreadsheet.Delete(k_NamedSheet);
+
+            Assert.That(spreadsheet.Read<Simple>(k_NamedSheet), Is.Null);
         }
     }
 }
