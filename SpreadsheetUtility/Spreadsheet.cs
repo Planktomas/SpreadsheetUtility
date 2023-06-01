@@ -6,8 +6,7 @@ namespace SpreadsheetUtility
 {
     public class Spreadsheet : IDisposable
     {
-        static readonly ObjectDisposedException k_DisposedException = new($"Spreadsheet has been disposed.");
-        static readonly ArgumentException k_UnknownSheetException = new("Sheet does not exist in the spreadsheet.");
+        static readonly ObjectDisposedException k_DisposedException = new($"Spreadsheet is disposed.");
 
         readonly string k_Path;
 
@@ -43,7 +42,7 @@ namespace SpreadsheetUtility
         {
             this.AutoFit();
 
-            if(m_StartupSheet != null)
+            if (m_StartupSheet != null)
                 Document.SelectWorksheet(m_StartupSheet);
 
             Document.SaveAs(k_Path);
@@ -103,17 +102,30 @@ namespace SpreadsheetUtility
         }
 
         /// <summary>
+        /// Deletes sheet from spreadsheet.
+        /// </summary>
+        /// <typeparam name="T">Type identifying sheet.</typeparam>
+        /// <returns>Returns `true` if the operation succeeded. Otherwise `false`.</returns>
+        public bool Delete<T>()
+        {
+            var sheetName = typeof(T).Name;
+
+            Document.AddWorksheet(SLDocument.DefaultFirstSheetName);
+            var result = Document.DeleteWorksheet(sheetName);
+            Document.DeleteWorksheet(SLDocument.DefaultFirstSheetName);
+
+            return result;
+        }
+
+        /// <summary>
         /// Sets a sheet that will be selected when opening *.xlsx file.
         /// </summary>
         /// <typeparam name="T">Type identifying sheet.</typeparam>
         public void SetStartupSheet<T>()
         {
-            var sheetName = typeof(T).Name;
-
-            if (!Document.GetWorksheetNames().Contains(sheetName))
-                throw k_UnknownSheetException;
-
-            m_StartupSheet = sheetName;
+            // Ensure a valid document
+            _ = Document;
+            m_StartupSheet = typeof(T).Name;
         }
 
         bool SelectSheet(string name, bool canCreate = true)

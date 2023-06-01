@@ -299,5 +299,18 @@ namespace Tests
 
             Assert.That(reopenedSpreadsheet.Document.GetCurrentWorksheetName(), Is.EqualTo(nameof(Simple)));
         }
+
+        [Test]
+        public void Delete_Works()
+        {
+            using var spreadsheet = new Spreadsheet(k_SpreadsheetFilename);
+            spreadsheet.Write(Simple.Three);
+
+            Assert.That(spreadsheet.Read<Simple>(), Is.Not.Null);
+
+            spreadsheet.Delete<Simple>();
+
+            Assert.That(spreadsheet.Read<Simple>(), Is.Null);
+        }
     }
 }
