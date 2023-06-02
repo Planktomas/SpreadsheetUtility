@@ -11,7 +11,7 @@
     <RepositoryUrl>https://github.com/Planktomas/SpreadsheetUtility</RepositoryUrl>
     <PackageTags>excel;spreadsheet;utility;sheet;lightweight;report;xlsx;xls;review;analysis;data</PackageTags>
     <Authors>Tomas Kucinskas</Authors>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Description>Ultra lightweight spreadsheet utility to display processed collections of data and occasionally reading it.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
