@@ -64,9 +64,9 @@ namespace SpreadsheetUtility
 
     internal static class StyleExtensions
     {
-        public static void ApplySheetAttributes<T>(this Spreadsheet spreadsheet, PropertyInfo[] properties)
+        public static void ApplySheetAttributes<T>(this Spreadsheet spreadsheet, List<PropertyInfo> properties)
         {
-            for (int i = 0; i < properties.Length; i++)
+            for (int i = 0; i < properties.Count; i++)
             {
                 var attributes = properties[i].GetCustomAttributes(true);
 

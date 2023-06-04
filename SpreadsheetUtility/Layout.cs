@@ -31,7 +31,7 @@ namespace SpreadsheetUtility
 
         internal static Flow s_Flow = k_DefaultFlow;
 
-        Flow m_PreviousFlow;
+        readonly Flow m_PreviousFlow;
 
         public LayoutScope(Type type)
         {

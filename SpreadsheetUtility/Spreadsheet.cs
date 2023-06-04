@@ -86,14 +86,13 @@ namespace SpreadsheetUtility
         public IEnumerable<T>? Read<T>(string? sheetName = null)
         {
             var name = sheetName ?? typeof(T).Name;
-            var properties = typeof(T).GetProperties().ToDictionary(p => p.Name);
-            using var layoutScope = new LayoutScope(typeof(T));
 
             if (!SelectSheet(name, false))
                 return null;
 
-            var sheetProperties = GetSheetProperties<T>();
-            return ReadData<T>(sheetProperties);
+            using var layoutScope = new LayoutScope(typeof(T));
+            var properties = GetPropertiesFromSheet<T>();
+            return ReadData<T>(properties);
         }
 
         /// <summary>
@@ -105,11 +104,11 @@ namespace SpreadsheetUtility
         public void Write<T>(IEnumerable<T> source, string? sheetName = null)
         {
             var name = sheetName ?? typeof(T).Name;
-            var properties = typeof(T).GetProperties();
-            using var layoutScope = new LayoutScope(typeof(T));
 
             SelectAndClearSheet(name);
-            WriteHeaders(properties);
+
+            using var layoutScope = new LayoutScope(typeof(T));
+            var properties = GetPropertiesFromType<T>();
             WriteData(properties, source);
             this.ApplySheetAttributes<T>(properties);
         }
@@ -172,35 +171,20 @@ namespace SpreadsheetUtility
             Document.DeleteWorksheet(SLDocument.DefaultFirstSheetName);
         }
 
-        void WriteHeaders(PropertyInfo[] properties)
+        List<PropertyInfo> GetPropertiesFromType<T>()
         {
-            for (int i = 0; i < properties.Length; i++)
-                Document.SetCellValue(Cell(i, 0), properties[i].Name);
+            var properties = typeof(T).GetProperties();
+            var sheetProperties = new List<PropertyInfo>();
+
+            foreach (var property in properties)
+                sheetProperties.Add(property);
+
+            return sheetProperties;
         }
 
-        void WriteData<T>(PropertyInfo[] properties, IEnumerable<T> source)
+        Dictionary<PropertyInfo, int> GetPropertiesFromSheet<T>()
         {
-            for (int y = 0; y < source.Count(); y++)
-                WriteEntry(y + 1, properties, source.ElementAt(y));
-        }
-
-        void WriteEntry<T>(int row, PropertyInfo[] properties, T source)
-        {
-            for (int x = 0; x < properties.Length; x++)
-            {
-                var value = (string?)Convert.ChangeType(properties[x].GetValue(source),
-                    typeof(string), CultureInfo.InvariantCulture);
-
-                if (properties[x].PropertyType == typeof(string))
-                    Document.SetCellValue(Cell(x, row), value);
-                else
-                    Document.SetCellValueNumeric(Cell(x, row), value);
-            }
-        }
-
-        Dictionary<PropertyInfo, int> GetSheetProperties<T>()
-        {
-            var typeProperties = typeof(T).GetProperties();
+            var properties = typeof(T).GetProperties();
             var sheetProperties = new Dictionary<PropertyInfo, int>();
 
             for (var i = 0; true; i++)
@@ -210,7 +194,7 @@ namespace SpreadsheetUtility
                 if (string.IsNullOrEmpty(label))
                     break;
 
-                var labelProperty = typeProperties.FirstOrDefault(p => p.Name == label);
+                var labelProperty = properties.FirstOrDefault(p => p.Name == label);
 
                 if (labelProperty == null)
                     continue;
@@ -219,6 +203,35 @@ namespace SpreadsheetUtility
             }
 
             return sheetProperties;
+        }
+
+        void WriteData<T>(List<PropertyInfo> properties, IEnumerable<T> source)
+        {
+            for (int i = 0; i < properties.Count(); i++)
+                Document.SetCellValue(Cell(i, 0), properties[i].Name);
+
+            for (int y = 0; y < source.Count(); y++)
+            {
+                for (int x = 0; x < properties.Count(); x++)
+                {
+                    var row = y + 1;
+                    var value = (string?)Convert.ChangeType(properties[x].GetValue(source.ElementAt(y)),
+                        typeof(string), CultureInfo.InvariantCulture);
+
+                    if (properties[x].PropertyType == typeof(string))
+                    {
+                        if (value?[0] == '=')
+                            for (int i = 0; i < properties.Count; i++)
+                                value = value.Replace(properties[i].Name, Cell(i, row));
+
+                        Document.SetCellValue(Cell(x, row), value);
+                    }
+                    else
+                    {
+                        Document.SetCellValueNumeric(Cell(x, row), value);
+                    }
+                }
+            }
         }
 
         IEnumerable<T> ReadData<T>(Dictionary<PropertyInfo, int> properties)
@@ -234,6 +247,9 @@ namespace SpreadsheetUtility
                 foreach (var property in properties)
                 {
                     var value = Document.GetCellValueAsString(Cell(property.Value, y));
+
+                    if (!property.Key.CanWrite)
+                        continue;
 
                     property.Key.SetValue(entry, Convert.ChangeType(value,
                         property.Key.PropertyType, CultureInfo.InvariantCulture));
