@@ -10,7 +10,7 @@ Ultra lightweight spreadsheet utility to display processed collections of data a
 + Reads sheet data into an enumerator(List)
 + Supports multiple sheets
 + Auto fits columns for comfortable viewing
-+ Can set startup sheet
++ Can set a startup sheet
 + Supports type independent sheet names
 + Supports custom string formatting
 + Supports color scale formatting
@@ -87,7 +87,7 @@ using (var spreadsheet = new Spreadsheet("Company.xlsx"))
 
 By default all sheets will have a horizontal data layout but we can change it to vertical using Layout attribute.
 
-```
+```cs
 [Layout(Flow.Vertical)]
 class Employee
 {
