@@ -26,6 +26,24 @@ namespace SpreadsheetUtility
 
         internal static bool IsVerticalFlow => LayoutScope.s_Flow == Flow.Vertical;
 
+        int Rows
+        {
+            get
+            {
+                var statistics = Document.GetWorksheetStatistics();
+                return IsVerticalFlow ? statistics.EndColumnIndex : statistics.EndRowIndex;
+            }
+        }
+
+        int Columns
+        {
+            get
+            {
+                var statistics = Document.GetWorksheetStatistics();
+                return IsVerticalFlow ? statistics.EndRowIndex : statistics.EndColumnIndex;
+            }
+        }
+
         /// <summary>
         /// Creates or opens an XLSX format spreadsheet.
         /// </summary>
@@ -171,23 +189,34 @@ namespace SpreadsheetUtility
             Document.DeleteWorksheet(SLDocument.DefaultFirstSheetName);
         }
 
-        List<PropertyInfo> GetPropertiesFromType<T>()
+        List<PropertyInfo> GetPropertiesFromType<T>(string? sheetName = null)
         {
+            var name = sheetName ?? typeof(T).Name;
             var properties = typeof(T).GetProperties();
             var sheetProperties = new List<PropertyInfo>();
 
             foreach (var property in properties)
+            {
+                var hiddenAttribute = property.GetCustomAttribute<HiddenAttribute>();
+
+                if (hiddenAttribute != null &&
+                    (hiddenAttribute.SheetNames.Length == 0 || hiddenAttribute.SheetNames.Contains(name)))
+                    continue;
+
                 sheetProperties.Add(property);
+            }
 
             return sheetProperties;
         }
 
-        Dictionary<PropertyInfo, int> GetPropertiesFromSheet<T>()
+        Dictionary<PropertyInfo, int> GetPropertiesFromSheet<T>(string? sheetName = null)
         {
+            var name = sheetName ?? typeof(T).Name;
             var properties = typeof(T).GetProperties();
             var sheetProperties = new Dictionary<PropertyInfo, int>();
+            var columnCount = Columns;
 
-            for (var i = 0; true; i++)
+            for (var i = 0; i < columnCount; i++)
             {
                 var label = Document.GetCellValueAsString(Cell(i, 0));
 
@@ -197,6 +226,12 @@ namespace SpreadsheetUtility
                 var labelProperty = properties.FirstOrDefault(p => p.Name == label);
 
                 if (labelProperty == null)
+                    continue;
+
+                var hiddenAttribute = labelProperty.GetCustomAttribute<HiddenAttribute>();
+
+                if (hiddenAttribute != null &&
+                    (hiddenAttribute.SheetNames.Length == 0 || hiddenAttribute.SheetNames.Contains(name)))
                     continue;
 
                 sheetProperties[labelProperty] = i;
@@ -236,11 +271,10 @@ namespace SpreadsheetUtility
 
         IEnumerable<T> ReadData<T>(Dictionary<PropertyInfo, int> properties)
         {
-            var statistics = Document.GetWorksheetStatistics();
-            var endIndex = IsVerticalFlow ? statistics.EndColumnIndex : statistics.EndRowIndex;
-            var data = new List<T>(endIndex + 1);
+            var rowCount = Rows;
+            var data = new List<T>(rowCount - 1);
 
-            for (int y = 1; y < endIndex; y++)
+            for (int y = 1; y < rowCount; y++)
             {
                 T entry = Activator.CreateInstance<T>();
 

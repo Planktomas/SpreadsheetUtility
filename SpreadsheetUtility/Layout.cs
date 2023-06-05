@@ -25,6 +25,24 @@ namespace SpreadsheetUtility
         }
     }
 
+    /// <summary>
+    /// Excludes property when writing and reading sheets. 
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
+    public class HiddenAttribute : Attribute
+    {
+        public string[] SheetNames { get; }
+
+        /// <summary>
+        /// Excludes property when writing and reading sheets. 
+        /// </summary>
+        /// <param name="sheetNames">Names of sheets where this property is going to be excluded from.</param>
+        public HiddenAttribute(params string[] sheetNames)
+        {
+            SheetNames = sheetNames;
+        }
+    }
+
     class LayoutScope : IDisposable
     {
         const Flow k_DefaultFlow = Flow.Horizontal;
