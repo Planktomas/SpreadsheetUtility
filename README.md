@@ -4,7 +4,7 @@ Ultra lightweight spreadsheet utility to display processed collections of data a
 ![license](https://img.shields.io/github/license/planktomas/spreadsheetutility.svg)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/planktomas/spreadsheetutility)
 
-#### Features
+### Features
 + Uses XLSX file format
 + Writes public properties of a collection into a dedicated sheet
 + Reads sheet data into an enumerator(List)
@@ -16,7 +16,7 @@ Ultra lightweight spreadsheet utility to display processed collections of data a
 + Supports color scale formatting
 + Supports horizontal and vertical data layout
 
-#### Tutorial
+### Tutorial
 
 Let's create an employee class to store in a spreadsheet.
 
@@ -83,8 +83,8 @@ using (var spreadsheet = new Spreadsheet("Company.xlsx"))
 
 [You can review the whole tutorial here](https://github.com/Planktomas/SpreadsheetUtility/blob/main/Tutorial/Program.cs)
 
-#### Additional features
-
+### Additional features
+#### Layout
 By default all sheets will have a horizontal data layout but we can change it to vertical using Layout attribute.
 
 ```cs
@@ -112,3 +112,39 @@ class Employee
 Here is how it looks in the spreadsheet.
 
 <img src="https://github.com/Planktomas/SpreadsheetUtility/assets/94010480/7aff29ad-88f5-413e-8be6-bb6d73773327.png" width="700" height="160" />
+
+#### Hidden attribute
+
+If there is no need to export a property to the spreadsheet we can exclude it via Hidden attribute.
+
+```cs
+class Employee
+{
+    [Hidden]
+    public string? Name { get; set; }
+    public string? Position { get; set; }
+    ...
+}
+```
+
+<img src="https://github.com/Planktomas/SpreadsheetUtility/assets/94010480/853d573e-a25a-40e3-a65a-5c50c7ddbcbc.png" width="360" height="180" />
+
+#### Formula
+
+Sometimes we want to have cells that update in real time or react to the changes we make in the spreadsheet. For this case we can use formulas. Keep in mind though that formulas can only reference properties in the same line. Also note that we don't declare a setter for formula property as we don't really need to read the formula back.
+
+```cs
+
+class Employee
+{
+    ...
+    [Format("0$")]
+    [ColorScale("red", "#00FF00" /* green */)]
+    public decimal Salary { get; set; }
+
+    public string DesiredSalary => $"= {nameof(Salary)} * 2";
+    ...
+}
+```
+
+<img src="https://github.com/Planktomas/SpreadsheetUtility/assets/94010480/1440bcbf-e5b4-417b-be68-80d2a64afd5a.png" width="400" height="180" />
