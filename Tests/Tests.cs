@@ -45,6 +45,18 @@ namespace Tests
             public static AutoFit[] Values = new[] { new AutoFit("Short", "LongLongLongLongLongLong") };
         }
 
+        class Advanced
+        {
+            [Hidden]
+            public int Hidden { get; set; }
+
+            public int Number => 2;
+
+            public string Formula => $"= {nameof(Number)} * {nameof(Number)}";
+
+            public static Advanced[] One = new[] { new Advanced() };
+        }
+
         [Layout(Flow.Horizontal)]
         class Horizontal { }
 
@@ -373,6 +385,29 @@ namespace Tests
             spreadsheet.Delete(k_NamedSheet);
 
             Assert.That(spreadsheet.Read<Simple>(k_NamedSheet), Is.Null);
+        }
+
+        [Test]
+        public void HiddenAttribute_Works()
+        {
+            using var spreadsheet = new Spreadsheet(k_SpreadsheetFilename);
+            spreadsheet.Write(Advanced.One);
+
+            Assert.That(spreadsheet?.Document.GetCellValueAsString("A1"), Is.Not.EqualTo(nameof(Advanced.Hidden)));
+        }
+
+        [Test]
+        public void FormulaReferences_GetsReplacedByCellAddresses()
+        {
+            using var spreadsheet = new Spreadsheet(k_SpreadsheetFilename);
+            spreadsheet.Write(Advanced.One);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(spreadsheet?.Document.GetCellValueAsString("A1"), Is.EqualTo(nameof(Advanced.Number)));
+                Assert.That(spreadsheet?.Document.GetCellValueAsString("B1"), Is.EqualTo(nameof(Advanced.Formula)));
+                Assert.That(spreadsheet?.Document.GetCellFormula("B2"), Contains.Substring("A2"));
+            });
         }
     }
 }
