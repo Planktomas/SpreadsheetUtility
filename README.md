@@ -15,6 +15,8 @@ Ultra lightweight spreadsheet utility to display processed collections of data a
 + Supports custom string formatting
 + Supports color scale formatting
 + Supports horizontal and vertical data layout
++ Can exclude specific properties from writing to the spreadsheet
++ Supports formulas referencing values in the same entry
 
 ### Tutorial
 
