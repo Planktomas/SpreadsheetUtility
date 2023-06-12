@@ -250,8 +250,17 @@ namespace SpreadsheetUtility
                 for (int x = 0; x < properties.Count(); x++)
                 {
                     var row = y + 1;
-                    var value = (string?)Convert.ChangeType(properties[x].GetValue(source.ElementAt(y)),
-                        typeof(string), CultureInfo.InvariantCulture);
+                    string? value;
+
+                    try
+                    {
+                        value = (string?)Convert.ChangeType(properties[x].GetValue(source.ElementAt(y)),
+                            typeof(string), CultureInfo.InvariantCulture);
+                    }
+                    catch (Exception innerException)
+                    {
+                        throw new Exception($"Could convert value of property '{properties[x].Name}' to string. The value would have been written to cell '{Cell(row, y)}'", innerException);
+                    }
 
                     if (properties[x].PropertyType == typeof(string))
                     {
@@ -285,8 +294,15 @@ namespace SpreadsheetUtility
                     if (!property.Key.CanWrite)
                         continue;
 
-                    property.Key.SetValue(entry, Convert.ChangeType(value,
-                        property.Key.PropertyType, CultureInfo.InvariantCulture));
+                    try
+                    {
+                        property.Key.SetValue(entry, Convert.ChangeType(value,
+                            property.Key.PropertyType, CultureInfo.InvariantCulture));
+                    }
+                    catch (Exception innerException)
+                    {
+                        throw new Exception($"Could not set value '{value}' to property '{property.Key.Name}'. The value was read in cell '{Cell(property.Value, y)}'", innerException);
+                    }
                 }
 
                 data.Add(entry);
