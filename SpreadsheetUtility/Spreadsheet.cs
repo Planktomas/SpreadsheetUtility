@@ -259,7 +259,7 @@ namespace SpreadsheetUtility
                     }
                     catch (Exception innerException)
                     {
-                        throw new Exception($"Could convert value of property '{properties[x].Name}' to string. The value would have been written to cell '{Cell(row, y)}'", innerException);
+                        throw new Exception($"Could not convert value of property '{properties[x].Name}' to string. The value would have been written to cell '{Cell(x, row)}'", innerException);
                     }
 
                     if (properties[x].PropertyType == typeof(string))
