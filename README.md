@@ -67,7 +67,7 @@ using (var spreadsheet = new Spreadsheet("Company.xlsx"))
 
 Here is how this data looks in the spreadsheet.
 
-<img src="https://github.com/Planktomas/SpreadsheetUtility/assets/94010480/155379da-b753-4069-a057-4022192345e5.png" width="350" height="220" />
+![242417480-155379da-b753-4069-a057-4022192345e5](https://github.com/Planktomas/SpreadsheetUtility/assets/94010480/271ed1e7-a73b-4e3e-848c-b047f5d406ab)
 
 And if we need to read some of that data back, we can do it too.
 
@@ -81,7 +81,7 @@ using (var spreadsheet = new Spreadsheet("Company.xlsx"))
 }
 ```
 
-<img src="https://github.com/Planktomas/SpreadsheetUtility/assets/94010480/5354153c-b40e-436d-9619-9652f3082cc0.png" width="520" height="160" />
+![242417436-5354153c-b40e-436d-9619-9652f3082cc0](https://github.com/Planktomas/SpreadsheetUtility/assets/94010480/321ece1a-9b57-473e-8ac9-04d1e73d6be9)
 
 [You can review the whole tutorial here](https://github.com/Planktomas/SpreadsheetUtility/blob/main/Tutorial/Program.cs)
 
@@ -113,7 +113,7 @@ class Employee
 
 Here is how it looks in the spreadsheet.
 
-<img src="https://github.com/Planktomas/SpreadsheetUtility/assets/94010480/7aff29ad-88f5-413e-8be6-bb6d73773327.png" width="700" height="160" />
+![242971009-7aff29ad-88f5-413e-8be6-bb6d73773327](https://github.com/Planktomas/SpreadsheetUtility/assets/94010480/274d725e-00cf-48a0-8272-0113ffc204b1)
 
 #### Hidden attribute
 
@@ -129,7 +129,7 @@ class Employee
 }
 ```
 
-<img src="https://github.com/Planktomas/SpreadsheetUtility/assets/94010480/853d573e-a25a-40e3-a65a-5c50c7ddbcbc.png" width="360" height="180" />
+![244773068-853d573e-a25a-40e3-a65a-5c50c7ddbcbc](https://github.com/Planktomas/SpreadsheetUtility/assets/94010480/d3929006-7cbd-47a7-9ab7-4a6d4464f35d)
 
 #### Formula
 
@@ -149,4 +149,4 @@ class Employee
 }
 ```
 
-<img src="https://github.com/Planktomas/SpreadsheetUtility/assets/94010480/1440bcbf-e5b4-417b-be68-80d2a64afd5a.png" width="400" height="180" />
+![244774728-1440bcbf-e5b4-417b-be68-80d2a64afd5a](https://github.com/Planktomas/SpreadsheetUtility/assets/94010480/f93f8c2f-2400-441e-83e1-765ace78eac8)
