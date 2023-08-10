@@ -6,6 +6,9 @@ namespace SpreadsheetUtility
 {
     public class Spreadsheet : IDisposable
     {
+        const int k_MaxColumnCount = 10_000;
+        const int k_MaxRowCount = 100_000;
+
         static readonly ObjectDisposedException k_DisposedException = new($"Spreadsheet is disposed.");
 
         readonly string k_Path;
@@ -26,22 +29,33 @@ namespace SpreadsheetUtility
 
         internal static bool IsVerticalFlow => LayoutScope.s_Flow == Flow.Vertical;
 
-        int Rows
+        int GetRowCount()
         {
-            get
+            var columnCount = GetColumnCount();
+
+            for (int y = 0; y < k_MaxRowCount; y++)
             {
-                var statistics = Document.GetWorksheetStatistics();
-                return IsVerticalFlow ? statistics.EndColumnIndex : statistics.EndRowIndex;
+                for (int x = 0; x < columnCount; x++)
+                {
+                    if (!string.IsNullOrEmpty(Document.GetCellValueAsString(Cell(x, y))))
+                        continue;
+
+                    return y;
+                }
             }
+
+            return k_MaxRowCount;
         }
 
-        int Columns
+        int GetColumnCount()
         {
-            get
+            for (int i = 0; i < k_MaxColumnCount; i++)
             {
-                var statistics = Document.GetWorksheetStatistics();
-                return IsVerticalFlow ? statistics.EndRowIndex : statistics.EndColumnIndex;
+                if (string.IsNullOrEmpty(Document.GetCellValueAsString(Cell(i, 0))))
+                    return i;
             }
+
+            return k_MaxColumnCount;
         }
 
         /// <summary>
@@ -214,7 +228,7 @@ namespace SpreadsheetUtility
             var name = sheetName ?? typeof(T).Name;
             var properties = typeof(T).GetProperties();
             var sheetProperties = new Dictionary<PropertyInfo, int>();
-            var columnCount = Columns;
+            var columnCount = GetColumnCount();
 
             for (var i = 0; i < columnCount; i++)
             {
@@ -280,7 +294,7 @@ namespace SpreadsheetUtility
 
         IEnumerable<T> ReadData<T>(Dictionary<PropertyInfo, int> properties)
         {
-            var rowCount = Rows;
+            var rowCount = GetRowCount();
             var data = new List<T>(rowCount - 1);
 
             for (int y = 1; y < rowCount; y++)
