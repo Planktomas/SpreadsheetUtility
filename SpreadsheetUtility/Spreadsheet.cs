@@ -140,7 +140,7 @@ namespace SpreadsheetUtility
             SelectAndClearSheet(name);
 
             using var layoutScope = new LayoutScope(typeof(T));
-            var properties = GetPropertiesFromType<T>();
+            var properties = GetPropertiesFromType<T>(name);
             WriteData(properties, source);
             this.ApplySheetAttributes<T>(properties);
         }
