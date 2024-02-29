@@ -259,6 +259,8 @@ namespace SpreadsheetUtility
             for (int i = 0; i < properties.Count(); i++)
                 Document.SetCellValue(Cell(i, 0), properties[i].Name);
 
+            Document.FreezePanes(1, 0);
+
             for (int y = 0; y < source.Count(); y++)
             {
                 for (int x = 0; x < properties.Count(); x++)
