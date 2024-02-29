@@ -4,11 +4,16 @@ using System.Reflection;
 
 namespace SpreadsheetUtility
 {
+    public abstract class SpreadsheetAttribute : Attribute
+    {
+        internal abstract void Apply(SLDocument document, int column);
+    }
+
     /// <summary>
     /// Applies specific format to column. 
     /// </summary>
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
-    public class FormatAttribute : Attribute
+    public class FormatAttribute : SpreadsheetAttribute
     {
         public string FormatCode { get; }
 
@@ -20,6 +25,17 @@ namespace SpreadsheetUtility
         {
             FormatCode = formatCode;
         }
+
+        internal override void Apply(SLDocument document, int column)
+        {
+            var style = document.GetColumnStyle(column);
+            style.FormatCode = FormatCode;
+
+            if (Spreadsheet.IsVerticalFlow)
+                document.SetRowStyle(column, style);
+            else
+                document.SetColumnStyle(column, style);
+        }
     }
 
     /// <summary>
@@ -28,7 +44,7 @@ namespace SpreadsheetUtility
     /// and color names (For example: AliceBlue).
     /// </summary>
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
-    public class ColorScaleAttribute : Attribute
+    public class ColorScaleAttribute : SpreadsheetAttribute
     {
         const string k_NeutralColor = "#FFFFFF";
 
@@ -60,6 +76,46 @@ namespace SpreadsheetUtility
             ColorMiddle = colorMiddle;
             ColorHigh = colorHigh;
         }
+
+        internal override void Apply(SLDocument document, int column)
+        {
+            SLConditionalFormatting? colorScale = null;
+            if (Spreadsheet.IsVerticalFlow)
+                colorScale = new SLConditionalFormatting(column, 0, column, int.MaxValue);
+            else
+                colorScale = new SLConditionalFormatting(0, column, int.MaxValue, column);
+
+            colorScale?.SetCustom3ColorScale(
+                SLConditionalFormatMinMaxValues.Percentile, "0", ColorTranslator.FromHtml(ColorLow),
+                SLConditionalFormatRangeValues.Percentile, "50", ColorTranslator.FromHtml(ColorMiddle),
+                SLConditionalFormatMinMaxValues.Percentile, "100", ColorTranslator.FromHtml(ColorHigh));
+            document.AddConditionalFormatting(colorScale);
+        }
+    }
+
+    /// <summary>
+    /// Applies tooltip to column name. 
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
+    public class TooltipAttribute : SpreadsheetAttribute
+    {
+        public string Tooltip { get; }
+
+        /// <summary>
+        /// Applies specific format to column. 
+        /// <see cref="https://support.microsoft.com/en-au/office/number-format-codes-5026bbd6-04bc-48cd-bf33-80f18b4eae68">See Microsoft format code documentation.</see>
+        /// </summary>
+        public TooltipAttribute(string tooltip)
+        {
+            Tooltip = tooltip;
+        }
+
+        internal override void Apply(SLDocument document, int column)
+        {
+            var tooltip = document.CreateComment();
+            tooltip.SetText(Tooltip);
+            document.InsertComment(Spreadsheet.Cell(column - 1, 0), tooltip);
+        }
     }
 
     internal static class StyleExtensions
@@ -72,33 +128,10 @@ namespace SpreadsheetUtility
 
                 foreach (var attribute in attributes)
                 {
-                    switch (attribute)
-                    {
-                        case FormatAttribute formatAttribute:
-                            var style = spreadsheet.Document.GetColumnStyle(i + 1);
-                            style.FormatCode = formatAttribute.FormatCode;
+                    if (attribute is not SpreadsheetAttribute spreadsheetAttribute)
+                        continue;
 
-                            if(Spreadsheet.IsVerticalFlow)
-                                spreadsheet.Document.SetRowStyle(i + 1, style);
-                            else
-                                spreadsheet.Document.SetColumnStyle(i + 1, style);
-                            break;
-
-                        case ColorScaleAttribute colorScaleAttribute:
-
-                            SLConditionalFormatting? colorScale = null;
-                            if(Spreadsheet.IsVerticalFlow)
-                                colorScale = new SLConditionalFormatting(i + 1, 0, i + 1, int.MaxValue);
-                            else
-                                colorScale = new SLConditionalFormatting(0, i + 1, int.MaxValue, i + 1);
-
-                            colorScale?.SetCustom3ColorScale(
-                                SLConditionalFormatMinMaxValues.Percentile, "0", ColorTranslator.FromHtml(colorScaleAttribute.ColorLow),
-                                SLConditionalFormatRangeValues.Percentile, "50", ColorTranslator.FromHtml(colorScaleAttribute.ColorMiddle),
-                                SLConditionalFormatMinMaxValues.Percentile, "100", ColorTranslator.FromHtml(colorScaleAttribute.ColorHigh));
-                            spreadsheet.Document.AddConditionalFormatting(colorScale);
-                            break;
-                    }
+                    spreadsheetAttribute.Apply(spreadsheet.Document, i + 1);
                 }
             }
         }
