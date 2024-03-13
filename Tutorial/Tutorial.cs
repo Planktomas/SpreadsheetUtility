@@ -21,6 +21,7 @@ using (var spreadsheet = new Spreadsheet("Company.xlsx"))
 
 class Employee
 {
+    [Tooltip("I don't care about surnames")]
     public string? Name { get; set; }
     public string? Position { get; set; }
 
