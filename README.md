@@ -1,5 +1,5 @@
 # SpreadsheetUtility
-Ultra lightweight spreadsheet utility to display processed collections of data and occasionally reading it
+Ultra lightweight spreadsheet utility to display processed collections of data and occasionally read it
 
 ![license](https://img.shields.io/github/license/planktomas/spreadsheetutility.svg)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/planktomas/spreadsheetutility)
@@ -7,9 +7,9 @@ Ultra lightweight spreadsheet utility to display processed collections of data a
 ### Features
 + Uses XLSX file format
 + Writes public properties of a collection into a dedicated sheet
-+ Reads sheet data into an enumerator(List)
++ Reads sheet data into an Enumerator(List)
 + Supports multiple sheets
-+ Auto fits columns for comfortable viewing
++ Auto-fits column width and freezes the first row for comfortable viewing
 + Can set a startup sheet
 + Supports type independent sheet names
 + Supports custom string formatting
@@ -17,6 +17,7 @@ Ultra lightweight spreadsheet utility to display processed collections of data a
 + Supports horizontal and vertical data layout
 + Can exclude specific properties from writing to the spreadsheet
 + Supports formulas referencing values in the same entry
++ Can set tooltips to columns in the form of a comment on the title cell
 
 ### Tutorial
 
@@ -150,3 +151,20 @@ class Employee
 ```
 
 ![244774728-1440bcbf-e5b4-417b-be68-80d2a64afd5a](https://github.com/Planktomas/SpreadsheetUtility/assets/94010480/f93f8c2f-2400-441e-83e1-765ace78eac8)
+
+#### Tooltip
+
+If descriptive property name would take too much space, use shortened name and set a tooltip explaining what data is contained in the slot.
+
+```cs
+class Employee
+{
+    [Tooltip("I don't care about surnames")]
+    public string? Name { get; set; }
+    public string? Position { get; set; }
+    ...
+}
+```
+
+![soffice bin_n7aAjVXWdx](https://github.com/Planktomas/SpreadsheetUtility/assets/94010480/c40d4121-4596-4364-a3a9-a312f91f1e8e)
+
